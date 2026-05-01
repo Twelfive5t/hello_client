@@ -1,0 +1,97 @@
+---
+# clang-tidy 配置
+# 基于 Linux 内核编码规范与现代 C++ 最佳实践
+
+Checks: >
+  -*,
+  bugprone-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-exception-escape,
+  -bugprone-implicit-widening-of-multiplication-result,
+  cert-*,
+  -cert-err58-cpp,
+  clang-analyzer-*,
+  cppcoreguidelines-*,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-prefer-member-initializer,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-vararg,
+  misc-*,
+  -misc-include-cleaner,
+  -misc-non-private-member-variables-in-classes,
+  modernize-*,
+  -modernize-use-trailing-return-type,
+  performance-*,
+  -performance-avoid-endl,
+  portability-*,
+  readability-*,
+  -readability-identifier-length,
+
+# 所有启用的检查项视为错误，阻断编译
+WarningsAsErrors: '*'
+
+# 检查项目头文件：services/
+# proto 生成目录通过 SYSTEM include 排除，不纳入 clang-tidy
+HeaderFilterRegex: '^.*/services/.*\.(hpp|h)$'
+
+# 不检查系统头文件
+SystemHeaders: false
+
+# 彩色输出
+UseColor: true
+
+CheckOptions:
+  # 命名：Linux 内核风格（snake_case / UPPER_CASE）
+  - key:   readability-identifier-naming.VariableCase
+    value: lower_case
+  - key:   readability-identifier-naming.ParameterCase
+    value: lower_case
+  - key:   readability-identifier-naming.ParameterIgnoredRegexp
+    value: '^[ijk_]$'  # 允许循环变量 i/j/k 和占位符 _
+  - key:   readability-identifier-naming.FunctionCase
+    value: lower_case
+  - key:   readability-identifier-naming.MemberCase
+    value: lower_case
+  - key:   readability-identifier-naming.PrivateMemberCase
+    value: lower_case
+  - key:   readability-identifier-naming.PrivateMemberSuffix
+    value: '_'
+  - key:   readability-identifier-naming.StructCase
+    value: lower_case
+  - key:   readability-identifier-naming.ClassCase
+    value: lower_case
+  - key:   readability-identifier-naming.NamespaceCase
+    value: lower_case
+  - key:   readability-identifier-naming.TypeAliasCase
+    value: lower_case
+  - key:   readability-identifier-naming.TypedefCase
+    value: lower_case
+  - key:   readability-identifier-naming.ConstantCase
+    value: UPPER_CASE
+  - key:   readability-identifier-naming.GlobalConstantCase
+    value: UPPER_CASE
+  - key:   readability-identifier-naming.EnumConstantCase
+    value: UPPER_CASE
+  - key:   readability-identifier-naming.MacroDefinitionCase
+    value: UPPER_CASE
+
+  # 可读性
+  - key:   readability-simplify-boolean-expr.SimplifyDeMorgan
+    value: 'false'
+  - key:   readability-identifier-length.IgnoredParameterNames
+    value: '^[ijk_]$'
+  - key:   readability-identifier-length.IgnoredVariableNames
+    value: '^[ijk_]$'
+
+  # bugprone：将项目 ASSERT 宏注册为断言宏
+  - key:   bugprone-assert-side-effect.AssertMacros
+    value: 'ASSERT'
+
+  # 现代 C++
+  - key:   modernize-use-default-member-init.UseAssignment
+    value: '1'
+  - key:   cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor
+    value: '1'
+...

@@ -1,0 +1,50 @@
+---
+# Linux 内核风格：大括号换行，空格缩进，snake_case 命名
+BasedOnStyle: LLVM
+
+# 基本布局
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+
+# 大括号：函数/类换行，控制语句不换行
+BreakBeforeBraces: Linux
+
+# 指针靠近变量名：int *ptr
+PointerAlignment: Right
+PointerBindsToType: false
+
+# 空格
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: false
+SpacesInAngles: Never
+SpacesInParentheses: false
+SpacesInSquareBrackets: false
+SpaceAfterCStyleCast: false
+SpaceBeforeAssignmentOperators: true
+
+# 缩进
+IndentCaseLabels: false
+IndentPPDirectives: None
+NamespaceIndentation: None
+ContinuationIndentWidth: 8
+AccessModifierOffset: -4
+
+# 函数参数：要么全在一行，要么每个参数单独一行
+AllowAllParametersOfDeclarationOnNextLine: false
+BinPackParameters: false
+BinPackArguments: false
+AlignAfterOpenBracket: BlockIndent
+AlwaysBreakAfterReturnType: None
+PenaltyReturnTypeOnItsOwnLine: 1000
+
+# 禁止短代码单行（空 lambda 除外）
+AllowShortFunctionsOnASingleLine: None
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: false
+AllowShortBlocksOnASingleLine: Never
+AllowShortLambdasOnASingleLine: Empty
+
+# 注释
+ReflowComments: false
