@@ -1,0 +1,55 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": ".\\build_ninja.bat",
+      "args": [
+        "${input:vsVersion}",
+        "${input:arch}"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+    {
+      "label": "ClientBuild",
+      "dependsOn": ["Build"],
+      "dependsOrder": "sequence",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "id": "vsVersion",
+      "type": "pickString",
+      "description": "Select the Visual Studio version",
+      "options": [
+        "2022",
+        "2019"
+      ],
+      "default": "2022"
+    },
+    {
+      "id": "arch",
+      "type": "pickString",
+      "description": "Select the target architecture",
+      "options": [
+        "x64",
+        "x86"
+      ],
+      "default": "x64"
+    }
+  ]
+}

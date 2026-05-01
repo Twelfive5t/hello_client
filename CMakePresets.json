@@ -1,0 +1,46 @@
+{
+    "version": 3,
+    "cmakeMinimumRequired": {
+        "major": 3,
+        "minor": 22,
+        "patch": 0
+    },
+    "configurePresets": [
+        {
+            "name": "ninja_release",
+            "displayName": "Release Ninja Base",
+            "description": "Base configuration for Release build using Ninja generator with Conan dependencies",
+            "generator": "Ninja",
+            "hidden": true,
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "cl.exe",
+                "CMAKE_CXX_COMPILER": "cl.exe",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "CMAKE_INSTALL_PREFIX": "products",
+                "CMAKE_MSVC_RUNTIME_LIBRARY": "MultiThreaded",
+                "CMAKE_POLICY_DEFAULT_CMP0077": "NEW",
+                "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
+                "CMAKE_BUILD_TYPE": "Release"
+            },
+            "toolchainFile": "${sourceDir}/build/conan/conan_toolchain.cmake",
+            "binaryDir": "${sourceDir}/build"
+        },
+        {
+            "name": "ninja_release_x64",
+            "displayName": "Release Ninja x64",
+            "description": "Release build for x64 architecture",
+            "inherits": "ninja_release",
+            "architecture": {
+                "value": "x64",
+                "strategy": "external"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "ninja_release_x64",
+            "configurePreset": "ninja_release_x64",
+            "jobs": 16
+        }
+    ]
+}
