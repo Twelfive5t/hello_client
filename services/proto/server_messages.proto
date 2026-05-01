@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option objc_class_prefix = "HLW";
+
+package ServerMessages;
+
+service ServerMessagesService {
+  rpc CheckOnline (CheckOnlineRequest) returns (CheckOnlineReply) {}
+}
+
+message CheckOnlineRequest {
+}
+
+message CheckOnlineReply {
+}
