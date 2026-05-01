@@ -1,0 +1,4 @@
+build/
+products/
+
+CMakeUserPresets.json
