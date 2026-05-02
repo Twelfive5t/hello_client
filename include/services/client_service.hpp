@@ -3,18 +3,20 @@
 
 #pragma once
 
-#include "hello_client/common.hpp"
+#include "common.hpp"
 #include <memory>
 #include <string>
 
-namespace hello_client {
+namespace hello_client
+{
 
 /// @brief 封装对 ServerMessagesService gRPC 接口的调用
 ///
 /// 使用 PIMPL 模式隐藏 gRPC 实现细节。调用任何接口前须先调用 init()。
-class HELLO_CLIENT_API client_service {
-  public:
-  client_service();
+class HELLO_CLIENT_API client_service
+{
+public:
+    client_service();
     ~client_service();
 
     /// @brief 初始化，建立到服务器的 gRPC channel
@@ -26,7 +28,7 @@ class HELLO_CLIENT_API client_service {
     /// @return client_error::K_OK 表示服务器在线
     auto check_online() noexcept -> client_error;
 
-  private:
+private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
 };

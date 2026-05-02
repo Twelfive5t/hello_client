@@ -1,67 +1,49 @@
-/// @file services/client/src/client_service.cpp
-/// @brief ClientService 及其 PIMPL 实现
+/// @file src/client/src/control/client_impl.cpp
+/// @brief client_service PIMPL 实现 —— 调用 messages 层，不直接依赖 gRPC/protobuf
 
-#include "hello_client/client_service.hpp"
-#include "server_messages.grpc.pb.h"
+#include "services/client_service.hpp"
+#include "messages/client_messages.hpp"
 
-#include <grpcpp/grpcpp.h>
-#include <memory>
 #include <spdlog/spdlog.h>
+#include <memory>
 
-namespace hello_client
-{
+namespace hello_client {
 
 // ---------------------------------------------------------------------------
-// PIMPL 实现类
+// PIMPL 实现 —— 持有 client_messages::service_client，屏蔽 gRPC 细节
 // ---------------------------------------------------------------------------
-class client_service::Impl
-{
+class client_service::Impl {
 public:
     auto init(const std::string &ip_port) noexcept -> client_error
     {
         try {
-            auto channel = grpc::CreateChannel(ip_port, grpc::InsecureChannelCredentials());
-            stub_ = ServerMessages::ServerMessagesService::NewStub(channel);
+            client_ = std::make_shared<client_messages::service_client>(ip_port);
             ip_port_ = ip_port;
             return client_error::K_OK;
         } catch (...) {
+            spdlog::error("client_service::init failed to create service_client");
             return client_error::K_CONNECTION_FAILED;
         }
     }
 
     auto check_online() noexcept -> client_error
     {
-        if (!stub_) {
+        if (!client_) {
             spdlog::error("client_service not initialized, call init() first");
             return client_error::K_NOT_INITIALIZED;
         }
-
-        grpc::ClientContext context;
-        const ServerMessages::CheckOnlineRequest request{};
-        ServerMessages::CheckOnlineReply reply;
-
-        const grpc::Status status = stub_->CheckOnline(&context, request, &reply);
-
-        if (status.ok()) {
-            spdlog::info("check_online: server is online (" + ip_port_ + ")");
-            return client_error::K_OK;
-        }
-
-        spdlog::error("check_online RPC failed: " + status.error_message());
-        return client_error::K_RPC_FAILED;
+        return client_->check_online();
     }
 
 private:
-    std::unique_ptr<ServerMessages::ServerMessagesService::Stub> stub_;
+    std::shared_ptr<client_messages::service_client> client_;
     std::string ip_port_;
 };
 
 // ---------------------------------------------------------------------------
 // client_service 公共接口
 // ---------------------------------------------------------------------------
-client_service::client_service() : pimpl_(std::make_unique<Impl>())
-{
-}
+client_service::client_service() : pimpl_(std::make_unique<Impl>()) {}
 
 client_service::~client_service() = default;
 
