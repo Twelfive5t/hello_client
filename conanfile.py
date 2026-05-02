@@ -11,7 +11,8 @@ class CompressorRecipe(ConanFile):
     # https://docs.conan.io/2.0/reference/conanfile/methods/requirements.html
     def requirements(self):
         self.requires("spdlog/1.13.0")
-        self.requires("grpc/1.54.3")
+        self.requires("protobuf/5.27.0")
+        self.requires("grpc/1.67.1")
 
     # The build_requirements() method is used to define tool_requires and test_requires:
     # https://docs.conan.io/2/reference/conanfile/methods/build_requirements.html
