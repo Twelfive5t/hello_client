@@ -31,12 +31,16 @@ find_program(CLANG_FORMAT_EXE NAMES clang-format)
 
 if(CLANG_FORMAT_EXE)
     file(GLOB_RECURSE ALL_SOURCE_FILES
-        "${CMAKE_SOURCE_DIR}/services/client/*.cpp"
-        "${CMAKE_SOURCE_DIR}/services/client/*.hpp"
+        "${CMAKE_SOURCE_DIR}/services/*.cpp"
+        "${CMAKE_SOURCE_DIR}/services/*.hpp"
+        "${CMAKE_SOURCE_DIR}/include/*.cpp"
+        "${CMAKE_SOURCE_DIR}/include/*.hpp"
     )
     add_custom_target(format
         COMMAND ${CLANG_FORMAT_EXE} -i --style=file ${ALL_SOURCE_FILES}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "clang-format: formatting all project sources"
+        VERBATIM
     )
     message(STATUS "clang-format enabled: ${CLANG_FORMAT_EXE}")
 else()
