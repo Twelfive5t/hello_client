@@ -2,12 +2,15 @@
 setlocal
 
 set "VS_VERSION=2022"
+set "ARCH=x64"
 
 for %%A in (%*) do (
     if /i "%%A"=="2019"   set "VS_VERSION=2019"
     if /i "%%A"=="vs2019" set "VS_VERSION=2019"
     if /i "%%A"=="2022"   set "VS_VERSION=2022"
     if /i "%%A"=="vs2022" set "VS_VERSION=2022"
+    if /i "%%A"=="x64"    set "ARCH=x64"
+    if /i "%%A"=="x86"    set "ARCH=x86"
 )
 
 if "%VS_VERSION%"=="2019" (
@@ -19,9 +22,16 @@ if "%VS_VERSION%"=="2019" (
 )
 
 for /d %%D in ("%VS_ROOT%\*") do (
-    if exist "%%D\VC\Auxiliary\Build\vcvars64.bat" (
-        call "%%D\VC\Auxiliary\Build\vcvars64.bat"
-        goto :build
+    if /i "%ARCH%"=="x64" (
+        if exist "%%D\VC\Auxiliary\Build\vcvars64.bat" (
+            call "%%D\VC\Auxiliary\Build\vcvars64.bat"
+            goto :build
+        )
+    ) else (
+        if exist "%%D\VC\Auxiliary\Build\vcvars32.bat" (
+            call "%%D\VC\Auxiliary\Build\vcvars32.bat"
+            goto :build
+        )
     )
 )
 
@@ -32,7 +42,7 @@ exit /b 1
 rd /s /q build 2>nul
 rd /s /q products 2>nul
 
-conan install . --profile=./conanfile/win_x86_64_release -s=compiler.version=%MSVC_COMPILER_VERSION% --build=missing
-cmake --preset client_release_x64
-cmake --build --preset client_release_x64
-cmake --install build
+conan install . --profile=./conanfile/win_%ARCH%_release -s=compiler.version=%MSVC_COMPILER_VERSION% --build=missing
+cmake --preset client_release_%ARCH%
+cmake --build --preset client_release_%ARCH%
+cmake --install build/Release

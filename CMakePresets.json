@@ -23,7 +23,7 @@
                 "CMAKE_BUILD_TYPE": "Release"
             },
             "toolchainFile": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
-            "binaryDir": "${sourceDir}/build"
+            "binaryDir": "${sourceDir}/build/Release"
         },
         {
             "name": "client_release_x64",
