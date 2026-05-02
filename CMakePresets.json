@@ -7,9 +7,9 @@
     },
     "configurePresets": [
         {
-            "name": "ninja_release",
-            "displayName": "Release Ninja Base",
-            "description": "Base configuration for Release build using Ninja generator with Conan dependencies",
+            "name": "client_release",
+            "displayName": "Release Client Base",
+            "description": "Base configuration",
             "generator": "Ninja",
             "hidden": true,
             "cacheVariables": {
@@ -22,24 +22,39 @@
                 "CMAKE_POLICY_DEFAULT_CMP0091": "NEW",
                 "CMAKE_BUILD_TYPE": "Release"
             },
-            "toolchainFile": "${sourceDir}/build/conan/conan_toolchain.cmake",
+            "toolchainFile": "${sourceDir}/build/Release/generators/conan_toolchain.cmake",
             "binaryDir": "${sourceDir}/build"
         },
         {
-            "name": "ninja_release_x64",
-            "displayName": "Release Ninja x64",
+            "name": "client_release_x64",
+            "displayName": "Release Client x64 Build Release",
             "description": "Release build for x64 architecture",
-            "inherits": "ninja_release",
+            "inherits": "client_release",
             "architecture": {
                 "value": "x64",
+                "strategy": "external"
+            }
+        },
+        {
+            "name": "client_release_x86",
+            "displayName": "Release Client x86 Build Release",
+            "description": "Release build for x86 architecture",
+            "inherits": "client_release",
+            "architecture": {
+                "value": "x86",
                 "strategy": "external"
             }
         }
     ],
     "buildPresets": [
         {
-            "name": "ninja_release_x64",
-            "configurePreset": "ninja_release_x64",
+            "name": "client_release_x64",
+            "configurePreset": "client_release_x64",
+            "jobs": 16
+        },
+        {
+            "name": "client_release_x86",
+            "configurePreset": "client_release_x86",
             "jobs": 16
         }
     ]

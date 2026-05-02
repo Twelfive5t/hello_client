@@ -4,7 +4,7 @@
     {
       "label": "Build",
       "type": "shell",
-      "command": ".\\build_ninja.bat",
+      "command": ".\\build.bat",
       "args": [
         "${input:vsVersion}",
         "${input:arch}"

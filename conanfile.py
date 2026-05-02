@@ -1,6 +1,7 @@
-from conan import ConanFile
-from conan.tools.cmake import CMake, CMakeToolchain
+from os import path
 
+from conan import ConanFile
+from conan.tools.cmake import CMake, cmake_layout, CMakeToolchain
 
 class CompressorRecipe(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
@@ -20,8 +21,9 @@ class CompressorRecipe(ConanFile):
     # The cmake_layout() sets the folders and cpp attributes to follow the structure of a typical CMake project.
     # https://docs.conan.io/2.0/reference/tools/cmake/cmake_layout.html
     def layout(self):
-        self.folders.generators = ""
-        self.folders.build = ""
+        cmake_layout(self)
+        self.folders.build  = path.join("build", str(self.settings.build_type))
+        self.folders.generators = path.join(self.folders.build, "generators")
 
     # The purpose of generate() is to prepare the build, generating the necessary files.
     # https://docs.conan.io/2.0/reference/conanfile/methods/generate.html

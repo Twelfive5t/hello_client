@@ -6,4 +6,4 @@ add_executable(main
 
 target_link_libraries(main PRIVATE spdlog::spdlog server_messages)
 
-install(TARGETS main DESTINATION bin)
+install(TARGETS main DESTINATION bin${VERSION_RELEASE})
