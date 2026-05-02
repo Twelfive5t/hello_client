@@ -8,25 +8,25 @@ namespace
 
 void run_client()
 {
-    const std::string SERVER_ADDRESS = "localhost:50051";
+    const std::string server_address = "172.19.15.204:50051";
 
     // 1. 创建 channel
-    auto channel = grpc::CreateChannel(SERVER_ADDRESS, grpc::InsecureChannelCredentials());
+    auto channel = grpc::CreateChannel(server_address, grpc::InsecureChannelCredentials());
 
     // 2. 创建 stub
     auto stub = ServerMessages::ServerMessagesService::NewStub(channel);
 
     // 3. 发起 RPC 调用
     grpc::ClientContext context;
-    const ServerMessages::CheckOnlineRequest REQUEST{};
+    const ServerMessages::CheckOnlineRequest request{};
     ServerMessages::CheckOnlineReply reply;
 
-    const grpc::Status STATUS = stub->CheckOnline(&context, REQUEST, &reply);
+    const grpc::Status status = stub->CheckOnline(&context, request, &reply);
 
-    if (STATUS.ok()) {
+    if (status.ok()) {
         spdlog::info("Server is online");
     } else {
-        spdlog::error("RPC failed: {}", STATUS.error_message());
+        spdlog::error("RPC failed: {}", status.error_message());
     }
 }
 

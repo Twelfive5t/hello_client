@@ -19,6 +19,7 @@ Checks: >
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
   -cppcoreguidelines-pro-type-vararg,
   misc-*,
+  -misc-const-correctness,
   -misc-include-cleaner,
   -misc-non-private-member-variables-in-classes,
   modernize-*,
@@ -70,6 +71,8 @@ CheckOptions:
     value: lower_case
   - key:   readability-identifier-naming.ConstantCase
     value: UPPER_CASE
+  - key:   readability-identifier-naming.LocalConstantCase
+    value: lower_case
   - key:   readability-identifier-naming.GlobalConstantCase
     value: UPPER_CASE
   - key:   readability-identifier-naming.EnumConstantCase
