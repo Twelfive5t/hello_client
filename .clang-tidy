@@ -35,7 +35,7 @@ WarningsAsErrors: '*'
 
 # 检查项目头文件：services/
 # proto 生成目录通过 SYSTEM include 排除，不纳入 clang-tidy
-HeaderFilterRegex: '^.*/services/.*\.(hpp|h)$'
+HeaderFilterRegex: '^.*/(include|services)/.*\.(hpp|h)$'
 
 # 不检查系统头文件
 SystemHeaders: false

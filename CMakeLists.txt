@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.22.1)
 # =================== 包含模块文件 ===================
 # 添加 cmake 模块路径
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 # 导入版本模块配置（需在 project() 前执行）
 include(VersionConfig)
 
