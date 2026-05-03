@@ -8,3 +8,4 @@ compiler.runtime_type=Release
 os=Windows
 [conf]
 tools.cmake.cmaketoolchain:generator = Ninja
+tools.build:defines=["NOMINMAX"]

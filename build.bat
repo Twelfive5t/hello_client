@@ -14,10 +14,8 @@ for %%A in (%*) do (
 )
 
 if "%VS_VERSION%"=="2019" (
-    set "MSVC_COMPILER_VERSION=192"
     set "VS_ROOT=%ProgramFiles(x86)%\Microsoft Visual Studio\2019"
 ) else (
-    set "MSVC_COMPILER_VERSION=193"
     set "VS_ROOT=%ProgramFiles%\Microsoft Visual Studio\2022"
 )
 
@@ -42,7 +40,15 @@ exit /b 1
 rd /s /q build 2>nul
 rd /s /q products 2>nul
 
-conan install . --profile=./conanfile/win_%ARCH%_release -s=compiler.version=%MSVC_COMPILER_VERSION% --build=missing
+rem Auto-detect MSVC compiler version from VCToolsVersion (e.g. 14.44.xxxxx -> 194)
+for /f "tokens=2 delims=." %%V in ("%VCToolsVersion%") do set "_MSVC_MINOR=%%V"
+set "MSVC_COMPILER_VERSION=19%_MSVC_MINOR:~0,1%"
+echo Detected MSVC compiler.version: %MSVC_COMPILER_VERSION%
+
+conan install . --profile:all=./conanfile/win_%ARCH%_release -s:a=compiler.version=%MSVC_COMPILER_VERSION% --build=missing
+if errorlevel 1 exit /b 1
 cmake --preset client_release_%ARCH%
+if errorlevel 1 exit /b 1
 cmake --build --preset client_release_%ARCH%
+if errorlevel 1 exit /b 1
 cmake --install build/Release
