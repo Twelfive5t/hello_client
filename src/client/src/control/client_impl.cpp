@@ -1,18 +1,20 @@
 /// @file src/client/src/control/client_impl.cpp
 /// @brief client_service PIMPL 实现 —— 调用 messages 层，不直接依赖 gRPC/protobuf
 
-#include "services/client_service.hpp"
 #include "messages/client_messages.hpp"
+#include "services/client_service.hpp"
 
-#include <spdlog/spdlog.h>
 #include <memory>
+#include <spdlog/spdlog.h>
 
-namespace hello_client {
+namespace hello_client
+{
 
 // ---------------------------------------------------------------------------
 // PIMPL 实现 —— 持有 client_messages::service_client，屏蔽 gRPC 细节
 // ---------------------------------------------------------------------------
-class client_service::Impl {
+class client_service::Impl
+{
 public:
     auto init(const std::string &ip_port) noexcept -> client_error
     {
@@ -43,7 +45,9 @@ private:
 // ---------------------------------------------------------------------------
 // client_service 公共接口
 // ---------------------------------------------------------------------------
-client_service::client_service() : pimpl_(std::make_unique<Impl>()) {}
+client_service::client_service() : pimpl_(std::make_unique<Impl>())
+{
+}
 
 client_service::~client_service() = default;
 

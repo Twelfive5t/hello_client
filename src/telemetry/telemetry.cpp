@@ -15,8 +15,8 @@
 #include "opentelemetry/sdk/trace/tracer_context_factory.h"
 #include "opentelemetry/sdk/trace/tracer_provider.h"
 #include "opentelemetry/sdk/trace/tracer_provider_factory.h"
-#include "opentelemetry/trace/propagation/http_trace_context.h"
 #include "opentelemetry/trace/context.h"
+#include "opentelemetry/trace/propagation/http_trace_context.h"
 #include "opentelemetry/trace/provider.h"
 
 #include <ctime>
@@ -57,15 +57,15 @@ public:
         for (const auto &ignored : ignored_names_) {
             if (name_str.find(ignored) != std::string::npos) {
                 // Decision::DROP 表示完全丢弃该 Span，不记录也不导出
-                return { .decision = opentelemetry::sdk::trace::Decision::DROP,
-                         .attributes = {},
-                         .trace_state = {} };
+                return {.decision = opentelemetry::sdk::trace::Decision::DROP,
+                        .attributes = {},
+                        .trace_state = {}};
             }
         }
         // 默认行为：记录并采样 (RECORD_AND_SAMPLE)
-        return { .decision = opentelemetry::sdk::trace::Decision::RECORD_AND_SAMPLE,
-                 .attributes = {},
-                 .trace_state = {} };
+        return {.decision = opentelemetry::sdk::trace::Decision::RECORD_AND_SAMPLE,
+                .attributes = {},
+                .trace_state = {}};
     }
 
     [[nodiscard]] opentelemetry::nostd::string_view GetDescription() const noexcept override
@@ -294,7 +294,7 @@ private:
         static constexpr size_t span_id_hex_len = 16;
         std::array<char, span_id_hex_len> buf{};
         span_id.ToLowerBase16(buf);
-        return { buf.data(), buf.size() };
+        return {buf.data(), buf.size()};
     }
 
     // 递归丢弃指定 Span ID 的所有子 Span
@@ -424,11 +424,11 @@ void init_tracer(const telemetry_config &config)
     }
 
     resource::ResourceAttributes attributes = {
-        { resource::SemanticConventions::kServiceName, config.service_name },
-        { resource::SemanticConventions::kServiceInstanceId, service_instance_id },
-        { resource::SemanticConventions::kServiceVersion, config.version },
-        { resource::SemanticConventions::kDeploymentEnvironment, config.environment },
-        { resource::SemanticConventions::kHostName, "test" }
+            {resource::SemanticConventions::kServiceName, config.service_name},
+            {resource::SemanticConventions::kServiceInstanceId, service_instance_id},
+            {resource::SemanticConventions::kServiceVersion, config.version},
+            {resource::SemanticConventions::kDeploymentEnvironment, config.environment},
+            {resource::SemanticConventions::kHostName, "test"}
     }; // 实际项目中可获取真实 Hostname
     auto resource = opentelemetry::sdk::resource::Resource::Create(attributes);
 
@@ -465,22 +465,19 @@ void cleanup_tracer()
 // ---------------------------------------------------------------------------
 namespace
 {
-struct map_text_carrier : public opentelemetry::context::propagation::TextMapCarrier
-{
+struct map_text_carrier : public opentelemetry::context::propagation::TextMapCarrier {
     const std::map<std::string, std::string> *read_map = nullptr;
     std::map<std::string, std::string> *write_map = nullptr;
 
-    explicit map_text_carrier(const std::map<std::string, std::string> &m)
-        : read_map(&m)
+    explicit map_text_carrier(const std::map<std::string, std::string> &m) : read_map(&m)
     {
     }
-    explicit map_text_carrier(std::map<std::string, std::string> &m)
-        : write_map(&m)
+    explicit map_text_carrier(std::map<std::string, std::string> &m) : write_map(&m)
     {
     }
 
-    [[nodiscard]] opentelemetry::nostd::string_view
-    Get(opentelemetry::nostd::string_view key) const noexcept override
+    [[nodiscard]] opentelemetry::nostd::string_view Get(opentelemetry::nostd::string_view key
+    ) const noexcept override
     {
         if (read_map == nullptr) {
             return "";
@@ -581,10 +578,8 @@ public:
     }
 
 private:
-    static auto make_root_span(
-            const std::string &str,
-            opentelemetry::trace::SpanKind kind
-    ) -> nostd::shared_ptr<opentelemetry::trace::Span>
+    static auto make_root_span(const std::string &str, opentelemetry::trace::SpanKind kind)
+            -> nostd::shared_ptr<opentelemetry::trace::Span>
     {
         opentelemetry::trace::StartSpanOptions options;
         options.kind = kind;

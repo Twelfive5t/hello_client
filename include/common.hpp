@@ -17,7 +17,8 @@
 #define HELLO_CLIENT_API
 #endif
 
-namespace hello_client {
+namespace hello_client
+{
 
 /// @brief 错误码枚举
 enum class client_error : std::uint8_t {

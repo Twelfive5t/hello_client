@@ -4,9 +4,9 @@
 #pragma once
 
 #include "common.hpp"
+#include "services/client_service.hpp"
 #include <memory>
 #include <string>
-#include "services/client_service.hpp"
 
 namespace hello_client
 {
@@ -33,11 +33,8 @@ public:
     ///                        默认为空，表示自动从 ip_port 提取 IP 并使用端口 4317。
     ///                        例如传入 "10.0.0.1:50051" 时会自动将 Jaeger 设置为 "10.0.0.1:4317"。
     /// @return client_error::K_OK 表示成功
-    auto create(
-            const std::string &ip_port,
-            const std::string &jaeger_endpoint = {}
-    ) noexcept -> client_error;
-
+    auto create(const std::string &ip_port, const std::string &jaeger_endpoint = {}) noexcept
+            -> client_error;
 
 private:
     class Impl;

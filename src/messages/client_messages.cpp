@@ -2,20 +2,22 @@
 /// @brief ServerMessagesService gRPC stub 封装实现
 
 #include "messages/client_messages.hpp"
-#include "telemetry/telemetry.hpp"
 #include "server_messages.grpc.pb.h"
+#include "telemetry/telemetry.hpp"
 
 #include <chrono>
 #include <grpcpp/client_context.h>
 #include <grpcpp/grpcpp.h>
 #include <spdlog/spdlog.h>
 
-namespace client_messages {
+namespace client_messages
+{
 
 // ---------------------------------------------------------------------------
 // PIMPL 实现 —— 持有 gRPC stub，所有 protobuf/grpc 细节封闭在此
 // ---------------------------------------------------------------------------
-class service_client::Impl {
+class service_client::Impl
+{
 public:
     explicit Impl(const std::string &ip_port)
     {
@@ -54,8 +56,7 @@ private:
 // ---------------------------------------------------------------------------
 // service_client 公共接口
 // ---------------------------------------------------------------------------
-service_client::service_client(const std::string &ip_port)
-    : pimpl_(std::make_unique<Impl>(ip_port))
+service_client::service_client(const std::string &ip_port) : pimpl_(std::make_unique<Impl>(ip_port))
 {
 }
 

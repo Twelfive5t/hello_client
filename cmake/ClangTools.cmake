@@ -36,7 +36,7 @@ if(CLANG_FORMAT_EXE)
         "${CMAKE_SOURCE_DIR}/include/*.cpp"
         "${CMAKE_SOURCE_DIR}/include/*.hpp"
     )
-    add_custom_target(format
+    add_custom_target(format ALL
         COMMAND ${CLANG_FORMAT_EXE} -i --style=file ${ALL_SOURCE_FILES}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMENT "clang-format: formatting all project sources"

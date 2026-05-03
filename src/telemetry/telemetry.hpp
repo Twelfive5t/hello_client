@@ -30,8 +30,7 @@ struct telemetry_config {
     std::vector<std::string> ignored_spans;
 
     // 后台线程配置 (解决 gRPC 线程继承 RT 亲和性的问题)
-    std::vector<int> background_cpu_affinity = {
-        0
+    std::vector<int> background_cpu_affinity = {0
     }; // 指定后台线程绑定的 CPU 核，为空则不修改 (默认绑定到核 0)
 };
 
