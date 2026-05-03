@@ -1,5 +1,6 @@
 build/
 products/
 tmp/
+tools/hello_client_test.bat
 
 CMakeUserPresets.json

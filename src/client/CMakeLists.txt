@@ -25,5 +25,5 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
         MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-install(TARGETS hello_client DESTINATION bin${VERSION_RELEASE})
+install(TARGETS hello_client DESTINATION bin)
 install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/ DESTINATION include)

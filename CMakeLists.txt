@@ -10,6 +10,9 @@ include(VersionConfig)
 # =================== 项目基本信息 ===================
 project(hello_client VERSION ${VERSION})
 
+# =================== 配置选项 ======================
+option(ENABLE_TESTING "Enable testing" OFF)
+
 # 导入通用模块配置
 include(CommonConfig)
 include(ClangTools)
@@ -19,12 +22,7 @@ add_subdirectory(src/proto)
 add_subdirectory(src/messages)
 add_subdirectory(src/client)
 
-# Custom command to move compile_commands.json to a fixed path
-if(CMAKE_EXPORT_COMPILE_COMMANDS)
-    add_custom_target(copy_compile_commands ALL
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_BINARY_DIR}/compile_commands.json
-        ${CMAKE_SOURCE_DIR}/build/compile_commands.json
-        COMMENT "Copying compile_commands.json to build"
-    )
+# =================== 测试配置 ===================
+if(ENABLE_TESTING)
+    add_subdirectory(test)
 endif()
