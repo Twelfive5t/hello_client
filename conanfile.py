@@ -14,6 +14,11 @@ class CompressorRecipe(ConanFile):
         self.requires("protobuf/5.27.0")
         self.requires("grpc/1.67.1")
         self.requires("gtest/1.14.0")
+        self.requires("opentelemetry-cpp/1.14.2")
+
+    def configure(self):
+        self.options["opentelemetry-cpp"].with_otlp_grpc = True
+        self.options["opentelemetry-cpp"].with_otlp_http = False
 
     # The build_requirements() method is used to define tool_requires and test_requires:
     # https://docs.conan.io/2/reference/conanfile/methods/build_requirements.html

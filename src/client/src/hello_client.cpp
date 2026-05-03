@@ -2,6 +2,7 @@
 /// @brief hello_client 门面类 PIMPL 实现
 
 #include "hello_client.hpp"
+#include "telemetry/telemetry.hpp"
 
 #include <spdlog/spdlog.h>
 
@@ -20,15 +21,29 @@ public:
 // ---------------------------------------------------------------------------
 hello_client::hello_client() : pimpl_(std::make_unique<Impl>()) {}
 
-hello_client::~hello_client() = default;
-
-auto hello_client::create(const std::string &ip_port) noexcept -> client_error
+hello_client::~hello_client()
 {
-    const auto err = client.init(ip_port);
-    if (err != client_error::K_OK) {
-        spdlog::error("hello_client::create failed to connect to " + ip_port);
-    }
-    return err;
+    cleanup_tracer();
+}
+
+auto hello_client::create(
+    const std::string &ip_port,
+    const std::string &jaeger_endpoint
+) noexcept -> client_error
+{
+// 如果未显式指定 Jaeger 地址，自动从 ip_port 中提取 IP，拼接端口 4317
+std::string effective_jaeger = jaeger_endpoint;
+if (effective_jaeger.empty()) {
+    const auto colon = ip_port.rfind(':');
+    const std::string host = (colon != std::string::npos) ? ip_port.substr(0, colon) : ip_port;
+    effective_jaeger = host + ":4317";
+}
+init_tracer({.service_name = "hello_client", .endpoint = effective_jaeger});
+const auto err = client.init(ip_port);
+if (err != client_error::K_OK) {
+    spdlog::error("hello_client::create failed to connect to " + ip_port);
+}
+return err;
 }
 
 } // namespace hello_client

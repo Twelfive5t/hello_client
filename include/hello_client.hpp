@@ -27,10 +27,16 @@ public:
     hello_client(hello_client &&) = delete;
     auto operator=(hello_client &&) -> hello_client & = delete;
 
-    /// @brief 初始化，建立到服务器的 gRPC channel
-    /// @param ip_port 服务器地址，格式 "ip:port"，例如 "127.0.0.1:50051"
+    /// @brief 初始化，建立到服务器的 gRPC channel 并启动 Trace 导出
+    /// @param ip_port         服务器地址，格式 "ip:port"，例如 "127.0.0.1:50051"
+    /// @param jaeger_endpoint Jaeger/OTel Collector OTLP gRPC 地址。
+    ///                        默认为空，表示自动从 ip_port 提取 IP 并使用端口 4317。
+    ///                        例如传入 "10.0.0.1:50051" 时会自动将 Jaeger 设置为 "10.0.0.1:4317"。
     /// @return client_error::K_OK 表示成功
-    auto create(const std::string &ip_port) noexcept -> client_error;
+    auto create(
+            const std::string &ip_port,
+            const std::string &jaeger_endpoint = {}
+    ) noexcept -> client_error;
 
 
 private:

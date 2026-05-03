@@ -14,4 +14,5 @@ target_link_libraries(client_messages
     server_messages
     PRIVATE
     spdlog::spdlog
+    TelemetryLib
 )

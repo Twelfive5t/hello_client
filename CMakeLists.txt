@@ -18,6 +18,7 @@ include(CommonConfig)
 include(ClangTools)
 
 # =================== 子目录 ===================
+add_subdirectory(src/telemetry)
 add_subdirectory(src/proto)
 add_subdirectory(src/messages)
 add_subdirectory(src/client)

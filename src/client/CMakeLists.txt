@@ -17,6 +17,7 @@ target_link_libraries(hello_client
     PRIVATE
     spdlog::spdlog
     client_messages
+    TelemetryLib
 )
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")

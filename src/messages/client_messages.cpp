@@ -2,7 +2,7 @@
 /// @brief ServerMessagesService gRPC stub 封装实现
 
 #include "messages/client_messages.hpp"
-
+#include "telemetry/telemetry.hpp"
 #include "server_messages.grpc.pb.h"
 
 #include <chrono>
@@ -25,7 +25,11 @@ public:
 
     [[nodiscard]] auto check_online() const noexcept -> hello_client::client_error
     {
+        trace_span span(FILE_LINE_FUNC);
         grpc::ClientContext context;
+        for (const auto &[key, value] : get_trace_headers()) {
+            context.AddMetadata(key, value);
+        }
         using namespace std::chrono_literals;
         constexpr auto k_check_online_timeout = 1000ms;
         context.set_deadline(std::chrono::system_clock::now() + k_check_online_timeout);
