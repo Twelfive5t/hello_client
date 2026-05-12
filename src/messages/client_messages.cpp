@@ -27,7 +27,7 @@ public:
 
     [[nodiscard]] auto check_online() const noexcept -> hello_client::client_error
     {
-        trace_span span(FILE_LINE_FUNC);
+        trace_span span;
         grpc::ClientContext context;
         for (const auto &[key, value] : get_trace_headers()) {
             context.AddMetadata(key, value);

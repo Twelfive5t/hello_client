@@ -19,10 +19,14 @@
 #include "opentelemetry/trace/propagation/http_trace_context.h"
 #include "opentelemetry/trace/provider.h"
 
+#include <array>
+#include <cstring>
 #include <ctime>
 #include <iomanip>
 #include <map>
 #include <mutex>
+#include <pthread.h>
+#include <sched.h>
 #include <set>
 #include <sstream>
 #include <string>
@@ -32,6 +36,39 @@ namespace trace_sdk = opentelemetry::sdk::trace;
 namespace otlp = opentelemetry::exporter::otlp;
 namespace nostd = opentelemetry::nostd;
 namespace resource = opentelemetry::sdk::resource;
+
+namespace
+{
+
+auto short_function_name(std::string_view function_name) -> std::string_view
+{
+    const auto params_pos = function_name.find('(');
+    if (params_pos != std::string_view::npos) {
+        function_name = function_name.substr(0, params_pos);
+    }
+
+    const auto scope_pos = function_name.rfind("::");
+    if (scope_pos != std::string_view::npos) {
+        function_name = function_name.substr(scope_pos + 2);
+    }
+
+    const auto space_pos = function_name.rfind(' ');
+    if (space_pos != std::string_view::npos) {
+        function_name = function_name.substr(space_pos + 1);
+    }
+
+    return function_name;
+}
+
+auto format_span_name(const std::source_location &source) -> std::string
+{
+    // 对外暴露的是"在这里进入了一个 RPC handler"的定位信息；
+    // 用 source_location 统一生成名字，可以保留 trace_span 既有的可读性，同时避免业务层手写 span 名称。
+    return std::string(source.file_name()) + ":" + std::to_string(source.line()) + ", " +
+           std::string(short_function_name(source.function_name()));
+}
+
+} // namespace
 
 // 自定义采样器：用于过滤掉不需要的 Span (例如高频但无关紧要的函数)
 class ignore_sampler : public opentelemetry::sdk::trace::Sampler
@@ -389,16 +426,39 @@ private:
 
 void init_tracer(const telemetry_config &config)
 {
+    // 保存当前线程的亲和性，以便在创建后台线程后恢复
+    cpu_set_t original_cpuset;
+    bool restore_affinity = false;
+
+    // 如果配置了CPU亲和性，则临时修改当前线程的亲和性
+    // 这样在创建 gRPC Exporter 时，其内部创建的后台线程会继承这个亲和性
+    if (!config.background_cpu_affinity.empty()) {
+        if (pthread_getaffinity_np(pthread_self(), sizeof(cpu_set_t), &original_cpuset) == 0) {
+            cpu_set_t new_cpuset;
+            CPU_ZERO(&new_cpuset);
+            for (int cpu : config.background_cpu_affinity) {
+                CPU_SET(cpu, &new_cpuset);
+            }
+            if (pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &new_cpuset) == 0) {
+                restore_affinity = true;
+            }
+        }
+    }
+
     // 1. 创建 Exporter: 负责将 Trace 数据发送到后端 (如 Jaeger, Zipkin, OTel Collector)
     // 这里使用 OTLP gRPC Exporter，它是 OpenTelemetry 的标准协议
     // 并使用 FilteringExporter 进行包装，以支持在导出阶段过滤掉被标记为丢弃的 Span
     opentelemetry::exporter::otlp::OtlpGrpcExporterOptions opts;
     opts.endpoint = config.endpoint;
 
+    // 创建 Exporter 时会初始化 gRPC 及其 event_engine 线程
     auto exporter = otlp::OtlpGrpcExporterFactory::Create(opts);
-    auto filtering_exp = std::unique_ptr<opentelemetry::sdk::trace::SpanExporter>(
-            new filtering_exporter(std::move(exporter))
-    );
+    auto filtering_exp = std::make_unique<filtering_exporter>(std::move(exporter));
+
+    // 恢复调用线程原来的亲和性
+    if (restore_affinity) {
+        pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &original_cpuset);
+    }
 
     // 2. 创建 Processor: 负责处理 Span (如批量发送，减少网络开销)
     // BatchSpanProcessor 会在后台缓冲 Span，并批量发送给 Exporter
@@ -548,6 +608,14 @@ public:
         before(str);
     }
 
+    impl(const std::string &str,
+         const std::map<std::string, std::string> &carrier,
+         opentelemetry::trace::SpanKind kind)
+        : span_(make_span_from_carrier(str, carrier, kind)),
+          outer_scope_(get_tracer()->WithActiveSpan(span_)) // NOLINT
+    {
+        before(str);
+    }
     ~impl()
     {
         after();
@@ -586,6 +654,24 @@ private:
         return get_tracer()->StartSpan(str, {}, options);
     }
 
+    static auto make_span_from_carrier(
+            const std::string &str,
+            const std::map<std::string, std::string> &carrier,
+            opentelemetry::trace::SpanKind kind
+    ) -> nostd::shared_ptr<opentelemetry::trace::Span>
+    {
+        auto propagator =
+                opentelemetry::context::propagation::GlobalTextMapPropagator::GetGlobalPropagator();
+        map_text_carrier mc(carrier);
+        auto current_ctx = opentelemetry::context::RuntimeContext::GetCurrent();
+        auto remote_ctx = propagator->Extract(mc, current_ctx);
+        auto parent_span = opentelemetry::trace::GetSpan(remote_ctx);
+        opentelemetry::trace::StartSpanOptions options;
+        options.parent = parent_span->GetContext();
+        options.kind = kind;
+        return get_tracer()->StartSpan(str, {}, options);
+    }
+
     nostd::shared_ptr<opentelemetry::trace::Span> span_;
     trace::Scope outer_scope_;
 };
@@ -610,8 +696,16 @@ auto trace_span::discard() -> void
     impl_->discard();
 }
 
-trace_span::trace_span(const std::string &str, span_kind kind)
-    : impl_(std::make_unique<impl>(str, to_otel_kind(kind)))
+trace_span::trace_span(span_kind kind, std::source_location source)
+    : impl_(std::make_unique<impl>(format_span_name(source), to_otel_kind(kind)))
+{
+}
+trace_span::trace_span(
+        const std::string &str,
+        const std::map<std::string, std::string> &carrier,
+        span_kind kind
+)
+    : impl_(std::make_unique<impl>(str, carrier, to_otel_kind(kind)))
 {
 }
 trace_span::~trace_span() = default;

@@ -2,21 +2,9 @@
 
 #include <map>
 #include <memory>
+#include <source_location>
 #include <string>
 #include <vector>
-
-#define FILE_LINE (__FILE__ + std::string(":") + std::to_string(__LINE__))
-#define FILE_LINE_FUNC                                                                             \
-    (__FILE__ + std::string(":") + std::to_string(__LINE__) + ", " + std::string(__FUNCTION__))
-
-#define TRACE_POINT trace_span trace_point_instance(FILE_LINE_FUNC);
-#define TRACE_POINT_CLIENT trace_span trace_point_instance(FILE_LINE_FUNC, span_kind::CLIENT);
-#define TRACE_POINT_ADD trace_point_instance.add_event(FILE_LINE_FUNC);
-#define TRACE_POINT_ADD_MSG(msg) trace_point_instance.add_event(msg);
-#define TRACE_POINT_DISCARD trace_point_instance.discard();
-// 从传入的 key-value 载体（如 gRPC server metadata map）提取远端 Context，作为当前 Span 的父 Span
-#define TRACE_POINT_WITH_CONTEXT(carrier)                                                          \
-    trace_span trace_point_instance(FILE_LINE_FUNC, (carrier), span_kind::SERVER);
 
 // Span 类型，影响 Jaeger 等后端的可视化颜色和布局
 enum class span_kind : std::uint8_t { INTERNAL, CLIENT, SERVER };
@@ -30,7 +18,8 @@ struct telemetry_config {
     std::vector<std::string> ignored_spans;
 
     // 后台线程配置 (解决 gRPC 线程继承 RT 亲和性的问题)
-    std::vector<int> background_cpu_affinity = {0
+    std::vector<int> background_cpu_affinity = {
+        0
     }; // 指定后台线程绑定的 CPU 核，为空则不修改 (默认绑定到核 0)
 };
 
@@ -45,8 +34,12 @@ auto get_trace_headers() -> std::map<std::string, std::string>;
 class trace_span
 {
 public:
-    /// 创建一个新的根 Span（默认 internal，可指定 client/server）
-    explicit trace_span(const std::string &str = FILE_LINE, span_kind kind = span_kind::INTERNAL);
+    /// 创建一个新的根 Span（默认 internal，可指定 client/server）。
+    /// 默认名字来自调用点的 source_location，避免继续依赖宏来拼文件和函数名。
+    explicit trace_span(
+            span_kind kind = span_kind::INTERNAL,
+            std::source_location source = std::source_location::current()
+    );
     /// 从传入载体（如 gRPC metadata map）中提取远端 Context，并以其为父 Span 创建子 Span
     trace_span(
             const std::string &str,
