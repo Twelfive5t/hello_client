@@ -1,5 +1,6 @@
 #pragma once
 
+#include <grpcpp/support/client_interceptor.h>
 #include <map>
 #include <memory>
 #include <source_location>
@@ -30,6 +31,13 @@ void cleanup_tracer();
 // 将当前活跃 Span 的 Trace Context 序列化为 W3C traceparent/tracestate header，
 // 用于注入到对外 RPC 调用（如 gRPC client metadata）中。
 auto get_trace_headers() -> std::map<std::string, std::string>;
+
+// gRPC 客户端的请求级 metrics 适合在 channel 构建阶段统一挂载；
+// 业务调用方不再关心指标对象、方法名解析或状态码属性组装。
+void install_grpc_client_metrics(
+        std::vector<std::unique_ptr<grpc::experimental::ClientInterceptorFactoryInterface>>
+                &interceptors
+);
 
 class trace_span
 {
