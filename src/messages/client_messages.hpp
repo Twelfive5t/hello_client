@@ -28,6 +28,9 @@ public:
     /// @brief 检查服务器是否在线（1s 超时）
     [[nodiscard]] auto check_online() const noexcept -> hello_client::client_error;
 
+    /// @brief 通知服务器退出
+    [[nodiscard]] auto exit_server() const noexcept -> hello_client::client_error;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

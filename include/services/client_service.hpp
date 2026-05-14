@@ -28,6 +28,10 @@ public:
     /// @return client_error::K_OK 表示服务器在线
     auto check_online() noexcept -> client_error;
 
+    /// @brief 通知服务器退出
+    /// @return client_error::K_OK 表示服务器已收到退出请求
+    auto exit_server() noexcept -> client_error;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

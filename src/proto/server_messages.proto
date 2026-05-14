@@ -6,10 +6,17 @@ package ServerMessages;
 
 service ServerMessagesService {
   rpc CheckOnline (CheckOnlineRequest) returns (CheckOnlineReply) {}
+  rpc ExitServer (ExitServerRequest) returns (ExitServerReply) {}
 }
 
 message CheckOnlineRequest {
 }
 
 message CheckOnlineReply {
+}
+
+message ExitServerRequest {
+}
+
+message ExitServerReply {
 }
