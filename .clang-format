@@ -48,3 +48,22 @@ AllowShortLambdasOnASingleLine: Empty
 
 # 注释
 ReflowComments: false
+CommentPragmas: '^ IWYU pragma:|^ NOLINT'
+SpacesBeforeTrailingComments: 1
+
+# include 分组排序：项目内部 > 第三方库 > 系统库
+SortIncludes: CaseInsensitive
+IncludeBlocks: Regroup
+IncludeCategories:
+  - Regex: '^"'
+    Priority: 1
+  - Regex: '^<.*(spdlog|fmt|boost|eigen)'
+    Priority: 2
+  - Regex: '^<'
+    Priority: 3
+
+# 其他
+Cpp11BracedListStyle: false
+BreakBeforeTernaryOperators: true
+AlwaysBreakTemplateDeclarations: Yes
+...
