@@ -660,7 +660,8 @@ void cleanup_tracer()
                 std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::seconds(3)
                 ); // 3s flush deadline
         global_meter_provider()->ForceFlush(cleanup_timeout);
-        global_meter_provider()->Shutdown();
+        // 不显式调用 Shutdown()：reset() 后 SetMeterProvider(noop) 会释放最后一个引用，
+        // 触发析构函数完成唯一的 Shutdown，避免二次调用引发 "Shutdown can only be invoked once" 警告。
         global_meter_provider().reset();
     }
 
