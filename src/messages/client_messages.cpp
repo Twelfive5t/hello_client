@@ -29,51 +29,48 @@ public:
     {
         trace_span span;
         grpc::ClientContext context;
-        for (const auto &[key, value] : get_trace_headers()) {
-            context.AddMetadata(key, value);
-        }
-        using namespace std::chrono_literals;
-        constexpr auto k_check_online_timeout = 1000ms;
-        context.set_deadline(std::chrono::system_clock::now() + k_check_online_timeout);
+        setup_context(context, K_RPC_TIMEOUT);
 
         const ServerMessages::CheckOnlineRequest request{};
         ServerMessages::CheckOnlineReply reply;
-
         const grpc::Status status = stub_->CheckOnline(&context, request, &reply);
+
         if (status.ok()) {
             spdlog::debug("check_online: server is online");
             return hello_client::client_error::K_OK;
         }
-
         spdlog::warn("check_online RPC failed: " + status.error_message());
         return hello_client::client_error::K_RPC_FAILED;
     }
 
     [[nodiscard]] auto exit_server() const noexcept -> hello_client::client_error
     {
-        trace_span span(FILE_LINE_FUNC);
+        trace_span span;
         grpc::ClientContext context;
-        for (const auto &[key, value] : get_trace_headers()) {
-            context.AddMetadata(key, value);
-        }
-        using namespace std::chrono_literals;
-        constexpr auto k_exit_server_timeout = 1000ms;
-        context.set_deadline(std::chrono::system_clock::now() + k_exit_server_timeout);
+        setup_context(context, K_RPC_TIMEOUT);
 
         const ServerMessages::ExitServerRequest request{};
         ServerMessages::ExitServerReply reply;
-
         const grpc::Status status = stub_->ExitServer(&context, request, &reply);
+
         if (status.ok()) {
             spdlog::debug("exit_server: server acknowledged exit request");
             return hello_client::client_error::K_OK;
         }
-
         spdlog::warn("exit_server RPC failed: " + status.error_message());
         return hello_client::client_error::K_RPC_FAILED;
     }
 
 private:
+    static void setup_context(grpc::ClientContext &context, std::chrono::milliseconds timeout)
+    {
+        for (const auto &[key, value] : get_trace_headers()) {
+            context.AddMetadata(key, value);
+        }
+        context.set_deadline(std::chrono::system_clock::now() + timeout);
+    }
+
+    static constexpr std::chrono::milliseconds K_RPC_TIMEOUT{1000};
     std::unique_ptr<ServerMessages::ServerMessagesService::Stub> stub_;
 };
 
