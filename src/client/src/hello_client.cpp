@@ -2,6 +2,7 @@
 /// @brief hello_client 门面类 PIMPL 实现
 
 #include "hello_client.hpp"
+
 #include "telemetry/telemetry.hpp"
 
 #include <spdlog/spdlog.h>
@@ -44,7 +45,7 @@ auto hello_client::create(const std::string &ip_port, const std::string &jaeger_
         }
         effective_jaeger = host + ":4317";
     }
-    init_tracer({.service_name = "hello_client", .endpoint = effective_jaeger});
+    init_tracer({ .service_name = "hello_client", .endpoint = effective_jaeger });
     const auto err = client.init(ip_port);
     if (err != client_error::K_OK) {
         spdlog::error("hello_client::create failed to connect to " + ip_port);

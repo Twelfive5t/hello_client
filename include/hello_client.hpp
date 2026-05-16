@@ -5,6 +5,7 @@
 
 #include "common.hpp"
 #include "services/client_service.hpp"
+
 #include <memory>
 #include <string>
 

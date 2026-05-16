@@ -202,15 +202,15 @@ public:
         for (const auto &ignored : ignored_names_) {
             if (name_str.find(ignored) != std::string::npos) {
                 // Decision::DROP 表示完全丢弃该 Span，不记录也不导出
-                return {.decision = opentelemetry::sdk::trace::Decision::DROP,
-                        .attributes = {},
-                        .trace_state = {}};
+                return { .decision = opentelemetry::sdk::trace::Decision::DROP,
+                         .attributes = {},
+                         .trace_state = {} };
             }
         }
         // 默认行为：记录并采样 (RECORD_AND_SAMPLE)
-        return {.decision = opentelemetry::sdk::trace::Decision::RECORD_AND_SAMPLE,
-                .attributes = {},
-                .trace_state = {}};
+        return { .decision = opentelemetry::sdk::trace::Decision::RECORD_AND_SAMPLE,
+                 .attributes = {},
+                 .trace_state = {} };
     }
 
     [[nodiscard]] opentelemetry::nostd::string_view GetDescription() const noexcept override
@@ -439,7 +439,7 @@ private:
         static constexpr size_t span_id_hex_len = 16;
         std::array<char, span_id_hex_len> buf{};
         span_id.ToLowerBase16(buf);
-        return {buf.data(), buf.size()};
+        return { buf.data(), buf.size() };
     }
 
     // 递归丢弃指定 Span ID 的所有子 Span
@@ -905,8 +905,7 @@ class grpc_client_metrics_interceptor_factory final
     : public grpc::experimental::ClientInterceptorFactoryInterface
 {
 public:
-    grpc::experimental::Interceptor *CreateClientInterceptor(
-            grpc::experimental::ClientRpcInfo *info
+    grpc::experimental::Interceptor *CreateClientInterceptor(grpc::experimental::ClientRpcInfo *info
     ) override
     {
         // gRPC 这里的工厂接口固定返回裸指针，所有权随后由 runtime 接管。

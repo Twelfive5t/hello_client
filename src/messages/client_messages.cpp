@@ -2,14 +2,16 @@
 /// @brief ServerMessagesService gRPC stub 封装实现
 
 #include "messages/client_messages.hpp"
+
 #include "server_messages.grpc.pb.h"
 #include "telemetry/telemetry.hpp"
+
+#include <spdlog/spdlog.h>
 
 #include <chrono>
 #include <grpcpp/client_context.h>
 #include <grpcpp/create_channel.h>
 #include <grpcpp/grpcpp.h>
-#include <spdlog/spdlog.h>
 
 namespace client_messages
 {
@@ -79,7 +81,7 @@ private:
         context.set_deadline(std::chrono::system_clock::now() + timeout);
     }
 
-    static constexpr std::chrono::milliseconds K_RPC_TIMEOUT{1000};
+    static constexpr std::chrono::milliseconds K_RPC_TIMEOUT{ 1000 };
     std::unique_ptr<ServerMessages::ServerMessagesService::Stub> stub_;
 };
 

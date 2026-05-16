@@ -4,8 +4,9 @@
 #include "messages/client_messages.hpp"
 #include "services/client_service.hpp"
 
-#include <memory>
 #include <spdlog/spdlog.h>
+
+#include <memory>
 
 namespace hello_client
 {

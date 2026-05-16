@@ -4,6 +4,7 @@
 #pragma once
 
 #include "common.hpp"
+
 #include <memory>
 #include <string>
 
