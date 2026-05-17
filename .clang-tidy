@@ -14,6 +14,7 @@ Checks: >
   cppcoreguidelines-*,
   -cppcoreguidelines-avoid-c-arrays,
   -cppcoreguidelines-avoid-do-while,
+  -cppcoreguidelines-avoid-magic-numbers,
   -cppcoreguidelines-macro-usage,
   -cppcoreguidelines-prefer-member-initializer,
   -cppcoreguidelines-pro-bounds-pointer-arithmetic,
@@ -29,6 +30,7 @@ Checks: >
   portability-*,
   readability-*,
   -readability-identifier-length,
+  -readability-magic-numbers,
 
 # 所有启用的检查项视为错误，阻断编译
 WarningsAsErrors: '*'
