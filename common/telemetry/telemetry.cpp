@@ -60,6 +60,32 @@ auto global_meter_provider() -> std::shared_ptr<metrics_sdk::MeterProvider> &
     return provider;
 }
 
+auto server_metrics_meter() -> nostd::shared_ptr<metrics::Meter>
+{
+    // 这些 instrument 属于服务端 RPC 指标 schema，本身是进程级单例；
+    // 业务 handler 只声明 service/method，不应该重复参与 Meter/Instrument 的创建。
+    static auto meter = metrics::Provider::GetMeterProvider()->GetMeter("hello_server", "1.0.0");
+    return meter;
+}
+
+auto server_request_counter() -> nostd::unique_ptr<metrics::Counter<std::uint64_t>> &
+{
+    static auto counter = server_metrics_meter()->CreateUInt64Counter(
+            "rpc.server.requests",
+            "Total number of gRPC requests handled by the server",
+            "{request}"
+    );
+    return counter;
+}
+
+auto server_request_duration_histogram() -> nostd::unique_ptr<metrics::Histogram<double>> &
+{
+    static auto histogram = server_metrics_meter()->CreateDoubleHistogram(
+            "rpc.server.duration", "End-to-end gRPC server request latency", "ms"
+    );
+    return histogram;
+}
+
 auto client_metrics_meter() -> nostd::shared_ptr<metrics::Meter>
 {
     // 这些 instrument 属于客户端 RPC 指标 schema，本身是进程级单例；
@@ -86,6 +112,20 @@ auto client_request_duration_histogram() -> nostd::unique_ptr<metrics::Histogram
     return histogram;
 }
 
+auto metadata_to_map(const grpc::ServerContext &context) -> std::map<std::string, std::string>
+{
+    // gRPC metadata 的底层存储受 ServerContext 生命周期约束；
+    // 这里复制成稳定的 map，后续 trace 提取逻辑就不需要知道 gRPC 的容器细节。
+    std::map<std::string, std::string> metadata;
+    for (const auto &entry : context.client_metadata()) {
+        metadata.emplace(
+                std::string(entry.first.data(), entry.first.size()),
+                std::string(entry.second.data(), entry.second.size())
+        );
+    }
+    return metadata;
+}
+
 auto short_function_name(std::string_view function_name) -> std::string_view
 {
     const auto params_pos = function_name.find('(');
@@ -108,7 +148,7 @@ auto short_function_name(std::string_view function_name) -> std::string_view
 
 auto format_span_name(const std::source_location &source) -> std::string
 {
-    // 对外暴露的是"在这里进入了一个 RPC handler"的定位信息；
+    // 对外暴露的是“在这里进入了一个 RPC handler”的定位信息；
     // 用 source_location 统一生成名字，可以保留 trace_span 既有的可读性，同时避免业务层手写 span 名称。
     return std::string(source.file_name()) + ":" + std::to_string(source.line()) + ", " +
            std::string(short_function_name(source.function_name()));
@@ -141,6 +181,41 @@ auto parse_rpc_method(std::string_view full_method_name) -> rpc_method_parts
 }
 
 // 记录单次 RPC 调用的计数和耗时，附带 rpc.system/service/method/status_code 属性
+auto record_server_rpc_metrics(
+        std::chrono::steady_clock::time_point started_at,
+        std::string_view service_name,
+        std::string_view method_name,
+        const grpc::Status &status
+) -> void
+{
+    const opentelemetry::nostd::string_view otel_service_name(
+            service_name.data(), service_name.size()
+    );
+    const opentelemetry::nostd::string_view otel_method_name(
+            method_name.data(), method_name.size()
+    );
+    const auto duration_millis = std::chrono::duration<double, std::milli>(
+            std::chrono::steady_clock::now() - started_at
+    );
+    const std::array<
+            std::pair<opentelemetry::nostd::string_view, opentelemetry::common::AttributeValue>,
+            4>
+            attributes = { {
+                    { "rpc.system", "grpc" },
+                    { "rpc.service", otel_service_name },
+                    { "rpc.method", otel_method_name },
+                    { "rpc.grpc.status_code", static_cast<std::int64_t>(status.error_code()) },
+            } };
+    const opentelemetry::common::KeyValueIterableView attributes_view{ attributes };
+    const auto &metric_attributes =
+            static_cast<const opentelemetry::common::KeyValueIterable &>(attributes_view);
+
+    server_request_counter()->Add(1, metric_attributes);
+    server_request_duration_histogram()->Record(
+            duration_millis.count(), metric_attributes, opentelemetry::context::Context{}
+    );
+}
+
 auto record_client_rpc_metrics(
         std::chrono::steady_clock::time_point started_at,
         std::string_view service_name,
@@ -436,7 +511,7 @@ private:
 
     [[nodiscard]] static std::string to_hex(const opentelemetry::trace::SpanId &span_id)
     {
-        static constexpr size_t span_id_hex_len = 16;
+        static constexpr size_t span_id_hex_len = 16; // SpanId is 8 bytes → 16 hex chars
         std::array<char, span_id_hex_len> buf{};
         span_id.ToLowerBase16(buf);
         return { buf.data(), buf.size() };
@@ -576,6 +651,8 @@ void init_tracer(const telemetry_config &config)
     // BatchSpanProcessor 会在后台缓冲 Span，并批量发送给 Exporter
     // 使用 SubtreeDiscardSpanProcessor 包装 BatchSpanProcessor，以支持整棵树的丢弃逻辑
     trace_sdk::BatchSpanProcessorOptions options{};
+    // options.max_queue_size = 10000;                                // 调大队列以容纳测试的所有 Span
+    // options.schedule_delay_millis = std::chrono::milliseconds(100); // 加快发送频率
     auto batch_processor =
             trace_sdk::BatchSpanProcessorFactory::Create(std::move(filtering_exp), options);
     auto processor = std::make_unique<subtree_discard_span_processor>(std::move(batch_processor));
@@ -678,6 +755,7 @@ void cleanup_tracer()
 // ---------------------------------------------------------------------------
 namespace
 {
+// 将 std::map 适配为 OTel TextMapCarrier，用于 W3C TraceContext 的注入（Inject）和提取（Extract）
 struct map_text_carrier : public opentelemetry::context::propagation::TextMapCarrier {
     const std::map<std::string, std::string> *read_map = nullptr;
     std::map<std::string, std::string> *write_map = nullptr;
@@ -748,6 +826,7 @@ auto to_otel_kind(span_kind kind) -> opentelemetry::trace::SpanKind
 }
 } // namespace
 
+// trace_span 的 PIMPL 实现：持有 OTel Span 和 Scope，负责 Span 的创建、激活和结束
 class trace_span::impl
 {
 public:
@@ -853,6 +932,14 @@ trace_span::trace_span(span_kind kind, std::source_location source)
     : impl_(std::make_unique<impl>(format_span_name(source), to_otel_kind(kind)))
 {
 }
+trace_span::trace_span(const grpc::ServerContext &context, std::source_location source)
+    : impl_(std::make_unique<impl>(
+              format_span_name(source),
+              metadata_to_map(context),
+              trace::SpanKind::kServer
+      ))
+{
+}
 trace_span::trace_span(
         const std::string &str,
         const std::map<std::string, std::string> &carrier,
@@ -865,6 +952,65 @@ trace_span::~trace_span() = default;
 
 trace_span::trace_span(trace_span &&) noexcept = default;
 auto trace_span::operator=(trace_span &&) noexcept -> trace_span & = default;
+
+// gRPC 服务端拦截器：在每个 RPC 调用的 PRE_SEND_STATUS 阶段记录请求计数和耗时
+class grpc_server_metrics_interceptor final : public grpc::experimental::Interceptor
+{
+public:
+    explicit grpc_server_metrics_interceptor(grpc::experimental::ServerRpcInfo *info)
+        : started_at_(std::chrono::steady_clock::now())
+    {
+        const auto rpc = parse_rpc_method(info->method());
+        service_name_ = rpc.service_name;
+        method_name_ = rpc.method_name;
+    }
+
+    void Intercept(grpc::experimental::InterceptorBatchMethods *methods) override
+    {
+        if (methods->QueryInterceptionHookPoint(
+                    grpc::experimental::InterceptionHookPoints::PRE_SEND_STATUS
+            ) &&
+            !metrics_recorded_) {
+            record_server_rpc_metrics(
+                    started_at_, service_name_, method_name_, methods->GetSendStatus()
+            );
+            metrics_recorded_ = true;
+        }
+
+        methods->Proceed();
+    }
+
+private:
+    std::chrono::steady_clock::time_point started_at_;
+    std::string service_name_;
+    std::string method_name_;
+    bool metrics_recorded_ = false;
+};
+
+// 拦截器工厂：为每个 RPC 创建一个 grpc_server_metrics_interceptor 实例
+class grpc_server_metrics_interceptor_factory final
+    : public grpc::experimental::ServerInterceptorFactoryInterface
+{
+public:
+    grpc::experimental::Interceptor *CreateServerInterceptor(grpc::experimental::ServerRpcInfo *info
+    ) override
+    {
+        // 这里选择 server 级 interceptor，而不是 handler 内显式埋点，
+        // 是因为 method/status/生命周期这些信息本来就由 gRPC runtime 持有。
+        // 把它们留在 server 构建层统一处理，更接近主流 middleware 写法，也更稳。
+        // gRPC 这里的工厂接口固定返回裸指针，所有权随后由 runtime 接管。
+        // NOLINTNEXTLINE(cppcoreguidelines-owning-memory)
+        return std::make_unique<grpc_server_metrics_interceptor>(info).release();
+    }
+};
+
+void install_grpc_server_metrics(grpc::ServerBuilder &builder)
+{
+    std::vector<std::unique_ptr<grpc::experimental::ServerInterceptorFactoryInterface>>
+            interceptor_creators;
+    interceptor_creators.push_back(std::make_unique<grpc_server_metrics_interceptor_factory>());
+    builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));
+}
 
 // gRPC 客户端拦截器：在每个 RPC 调用的 POST_RECV_STATUS 阶段记录请求计数和耗时
 class grpc_client_metrics_interceptor final : public grpc::experimental::Interceptor

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <grpcpp/server_builder.h>
+#include <grpcpp/server_context.h>
 #include <grpcpp/support/client_interceptor.h>
 #include <map>
 #include <memory>
@@ -32,6 +34,10 @@ void cleanup_tracer();
 // 用于注入到对外 RPC 调用（如 gRPC client metadata）中。
 auto get_trace_headers() -> std::map<std::string, std::string>;
 
+// gRPC 服务端的请求级 metrics 适合放在 server 构建阶段统一挂载；
+// 业务 handler 不再关心指标对象、方法名解析或状态码属性组装。
+void install_grpc_server_metrics(grpc::ServerBuilder &builder);
+
 // gRPC 客户端的请求级 metrics 适合在 channel 构建阶段统一挂载；
 // 业务调用方不再关心指标对象、方法名解析或状态码属性组装。
 void install_grpc_client_metrics(
@@ -46,6 +52,11 @@ public:
     /// 默认名字来自调用点的 source_location，避免继续依赖宏来拼文件和函数名。
     explicit trace_span(
             span_kind kind = span_kind::INTERNAL,
+            std::source_location source = std::source_location::current()
+    );
+    /// gRPC handler 的常见入口：从 ServerContext 提取远端 Context，并创建 server span。
+    explicit trace_span(
+            const grpc::ServerContext &context,
             std::source_location source = std::source_location::current()
     );
     /// 从传入载体（如 gRPC metadata map）中提取远端 Context，并以其为父 Span 创建子 Span
