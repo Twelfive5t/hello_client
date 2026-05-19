@@ -11,6 +11,7 @@ target_include_directories(hello_client
     PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/common
 )
 
 target_link_libraries(hello_client

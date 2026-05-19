@@ -5,6 +5,7 @@ add_library(client_messages STATIC client_messages.cpp)
 target_include_directories(client_messages
     PUBLIC
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/common
     PRIVATE
     ${CMAKE_SOURCE_DIR}/include
 )
