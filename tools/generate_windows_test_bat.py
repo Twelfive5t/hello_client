@@ -42,11 +42,7 @@ def generate_bat(tests, output_path):
     e("@echo off")
     e("setlocal enabledelayedexpansion")
     e()
-    e("set /p \"INPUT_IP=Enter server IP   [127.0.0.1]: \"")
-    e("if \"!INPUT_IP!\"==\"\" set \"INPUT_IP=127.0.0.1\"")
-    e("set /p \"INPUT_PORT=Enter server port [50051]:    \"")
-    e("if \"!INPUT_PORT!\"==\"\" set \"INPUT_PORT=50051\"")
-    e("set \"SERVER=!INPUT_IP!:!INPUT_PORT!\"")
+    e("goto :SERVER_INPUT")
     e()
 
     # flatten: [(category, fixture, name), ...]
@@ -69,12 +65,14 @@ def generate_bat(tests, output_path):
         display = name[9:] + " (DISABLED)" if name.startswith("DISABLED_") else name
         e(f"echo    {i}.  {display}")
     e("echo.")
+    e("echo    C.  Change Server")
     e("echo    0.  Exit")
     e("echo ============================================")
     e("set \"TEST=\"")
     e("set \"FIXTURE=\"")
     e("set /p CHOICE=Select: ")
     e()
+    e("if /I \"!CHOICE!\"==\"C\" goto :SERVER_INPUT")
     e("if \"!CHOICE!\"==\"0\" goto :EOF")
     e()
 
@@ -93,6 +91,14 @@ def generate_bat(tests, output_path):
     e("\"%~dp0main_test.exe\" --gtest_filter=!FIXTURE!.!TEST! --server=!SERVER! --gtest_color=yes")
     e("echo.")
     e("pause")
+    e("goto :MENU")
+    e()
+    e(":SERVER_INPUT")
+    e("set /p \"INPUT_IP=Enter server IP   [127.0.0.1]: \"")
+    e("if \"!INPUT_IP!\"==\"\" set \"INPUT_IP=127.0.0.1\"")
+    e("set /p \"INPUT_PORT=Enter server port [50051]:    \"")
+    e("if \"!INPUT_PORT!\"==\"\" set \"INPUT_PORT=50051\"")
+    e("set \"SERVER=!INPUT_IP!:!INPUT_PORT!\"")
     e("goto :MENU")
 
     content = "\r\n".join(lines)

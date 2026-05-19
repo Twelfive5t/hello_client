@@ -12,9 +12,10 @@ target_include_directories(main_test
     PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/include
+    ${CMAKE_SOURCE_DIR}/common
 )
 
-target_link_libraries(main_test PRIVATE hello_client GTest::gtest)
+target_link_libraries(main_test PRIVATE hello_client NetDiscoveryLib GTest::gtest)
 target_compile_features(main_test PRIVATE cxx_std_20)
 
 add_test(NAME main_test COMMAND main_test --gtest_color=yes)

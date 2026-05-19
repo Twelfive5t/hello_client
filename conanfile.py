@@ -15,6 +15,7 @@ class CompressorRecipe(ConanFile):
         self.requires("grpc/1.67.1")
         self.requires("gtest/1.14.0")
         self.requires("opentelemetry-cpp/1.14.2")
+        self.requires("mdns/1.4.3")
 
     def configure(self):
         self.options["opentelemetry-cpp"].with_otlp_grpc = True

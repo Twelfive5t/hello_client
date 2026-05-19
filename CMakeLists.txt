@@ -19,6 +19,7 @@ include(ClangTools)
 
 # =================== 子目录 ===================
 add_subdirectory(common/telemetry)
+add_subdirectory(common/net_discovery)
 add_subdirectory(src/proto)
 add_subdirectory(src/messages)
 add_subdirectory(src/client)

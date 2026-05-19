@@ -34,6 +34,11 @@ hello_client::~hello_client()
 auto hello_client::create(const std::string &ip_port, const std::string &jaeger_endpoint) noexcept
         -> client_error
 {
+    if (ip_port.empty()) {
+        spdlog::error("hello_client::create requires an explicit ip:port");
+        return client_error::K_CONNECTION_FAILED;
+    }
+
     // 如果未显式指定 Jaeger 地址，自动从 ip_port 中提取 IP，拼接端口 4317
     // 0.0.0.0 是绑定地址，不能作为连接目标，自动回退到 127.0.0.1
     std::string effective_jaeger = jaeger_endpoint;
