@@ -14,6 +14,7 @@ if(ENABLE_CLANG_TIDY)
         if(MSVC)
             list(APPEND CLANG_TIDY_ARGS
                 "--extra-arg=/EHsc"
+                "--extra-arg=/D_ALLOW_COMPILER_AND_STL_VERSION_MISMATCH"
                 "--extra-arg=/Fonul"
             )
         endif()
