@@ -1,0 +1,25 @@
+# Normalize text files for cross-platform development.
+* text=auto eol=lf
+
+# Windows command scripts should keep CRLF in the working tree.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binary assets and build artifacts must never be line-ending normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.7z binary
+*.dll binary
+*.lib binary
+*.exe binary
+*.so binary
+*.a binary
+*.dylib binary
