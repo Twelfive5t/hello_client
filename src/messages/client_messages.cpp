@@ -10,7 +10,6 @@
 
 #include <chrono>
 #include <grpcpp/client_context.h>
-#include <grpcpp/create_channel.h>
 #include <grpcpp/grpcpp.h>
 
 namespace client_messages
@@ -24,14 +23,8 @@ class service_client::Impl
 public:
     explicit Impl(const std::string &ip_port)
     {
-        std::vector<std::unique_ptr<grpc::experimental::ClientInterceptorFactoryInterface>>
-                interceptors;
-        install_grpc_client_metrics(interceptors);
-        auto channel = grpc::experimental::CreateCustomChannelWithInterceptors(
-                ip_port,
-                grpc::InsecureChannelCredentials(),
-                grpc::ChannelArguments{},
-                std::move(interceptors)
+        auto channel = create_grpc_client_channel_with_metrics(
+                ip_port, grpc::InsecureChannelCredentials()
         );
         stub_ = ServerMessages::ServerMessagesService::NewStub(channel);
     }

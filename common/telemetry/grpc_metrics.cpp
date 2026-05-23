@@ -6,6 +6,8 @@
 
 #include <array>
 #include <chrono>
+#include <grpcpp/create_channel.h>
+#include <grpcpp/support/client_interceptor.h>
 #include <mutex>
 #include <string_view>
 
@@ -317,10 +319,16 @@ void install_grpc_server_metrics(grpc::ServerBuilder &builder)
     builder.experimental().SetInterceptorCreators(std::move(interceptor_creators));
 }
 
-void install_grpc_client_metrics(
-        std::vector<std::unique_ptr<grpc::experimental::ClientInterceptorFactoryInterface>>
-                &interceptors
-)
+auto create_grpc_client_channel_with_metrics(
+        const std::string &target,
+        const std::shared_ptr<grpc::ChannelCredentials> &credentials,
+        const grpc::ChannelArguments &arguments
+) -> std::shared_ptr<grpc::Channel>
 {
-    interceptors.push_back(std::make_unique<grpc_client_metrics_interceptor_factory>());
+    std::vector<std::unique_ptr<grpc::experimental::ClientInterceptorFactoryInterface>>
+            interceptor_creators;
+    interceptor_creators.push_back(std::make_unique<grpc_client_metrics_interceptor_factory>());
+    return grpc::experimental::CreateCustomChannelWithInterceptors(
+            target, credentials, arguments, std::move(interceptor_creators)
+    );
 }

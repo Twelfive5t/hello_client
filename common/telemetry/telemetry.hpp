@@ -1,9 +1,11 @@
 #pragma once
 
 #include <cstdint>
+#include <grpcpp/channel.h>
+#include <grpcpp/security/credentials.h>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
-#include <grpcpp/support/client_interceptor.h>
+#include <grpcpp/support/channel_arguments.h>
 #include <map>
 #include <memory>
 #include <source_location>
@@ -50,10 +52,11 @@ void install_grpc_server_metrics(grpc::ServerBuilder &builder);
 
 // gRPC 客户端的请求级 metrics 适合在 channel 构建阶段统一挂载；
 // 业务调用方不再关心指标对象、方法名解析或状态码属性组装。
-void install_grpc_client_metrics(
-        std::vector<std::unique_ptr<grpc::experimental::ClientInterceptorFactoryInterface>>
-                &interceptors
-);
+auto create_grpc_client_channel_with_metrics(
+        const std::string &target,
+        const std::shared_ptr<grpc::ChannelCredentials> &credentials,
+        const grpc::ChannelArguments &arguments = grpc::ChannelArguments{}
+) -> std::shared_ptr<grpc::Channel>;
 
 // ---- Trace Span ------------------------------------------------------------
 
