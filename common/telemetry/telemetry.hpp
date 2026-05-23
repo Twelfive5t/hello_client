@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cstdint>
 #include <grpcpp/server_builder.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/client_interceptor.h>
@@ -9,7 +10,9 @@
 #include <string>
 #include <vector>
 
-// Span 类型，影响 Jaeger 等后端的可视化颜色和布局
+// ---- 配置类型 ---------------------------------------------------------------
+
+// Span 类型，影响 Jaeger 等后端的可视化颜色和布局。
 enum class span_kind : std::uint8_t { INTERNAL, CLIENT, SERVER };
 
 struct telemetry_config {
@@ -26,16 +29,23 @@ struct telemetry_config {
     }; // 指定后台线程绑定的 CPU 核，为空则不修改 (默认绑定到核 0)
 };
 
-// 初始化 Tracer，支持传入配置
+// ---- 生命周期 ---------------------------------------------------------------
+
+// 初始化 Tracer，支持传入配置。
 void init_tracer(const telemetry_config &config = telemetry_config{});
 void cleanup_tracer();
+
+// ---- Trace Context ---------------------------------------------------------
 
 // 将当前活跃 Span 的 Trace Context 序列化为 W3C traceparent/tracestate header，
 // 用于注入到对外 RPC 调用（如 gRPC client metadata）中。
 auto get_trace_headers() -> std::map<std::string, std::string>;
 
+// ---- gRPC Metrics ----------------------------------------------------------
+
 // gRPC 服务端的请求级 metrics 适合放在 server 构建阶段统一挂载；
 // 业务 handler 不再关心指标对象、方法名解析或状态码属性组装。
+// 注意：gRPC server interceptor 必须在 ServerBuilder 阶段挂载，init_tracer() 无法替代这一步。
 void install_grpc_server_metrics(grpc::ServerBuilder &builder);
 
 // gRPC 客户端的请求级 metrics 适合在 channel 构建阶段统一挂载；
@@ -44,6 +54,8 @@ void install_grpc_client_metrics(
         std::vector<std::unique_ptr<grpc::experimental::ClientInterceptorFactoryInterface>>
                 &interceptors
 );
+
+// ---- Trace Span ------------------------------------------------------------
 
 class trace_span
 {
