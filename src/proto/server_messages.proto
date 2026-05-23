@@ -7,6 +7,7 @@ package ServerMessages;
 service ServerMessagesService {
   rpc CheckOnline (CheckOnlineRequest) returns (CheckOnlineReply) {}
   rpc ExitServer (ExitServerRequest) returns (ExitServerReply) {}
+  rpc GetServerVersion (GetServerVersionRequest) returns (GetServerVersionReply) {}
 }
 
 message CheckOnlineRequest {
@@ -19,4 +20,11 @@ message ExitServerRequest {
 }
 
 message ExitServerReply {
+}
+
+message GetServerVersionRequest {
+}
+
+message GetServerVersionReply {
+  string version = 1;
 }

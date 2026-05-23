@@ -37,8 +37,8 @@ echo VS %VS_VERSION% not found.
 exit /b 1
 
 :build
-rd /s /q build 2>nul
-rd /s /q products 2>nul
+@REM rd /s /q build 2>nul
+@REM rd /s /q products 2>nul
 
 rem Auto-detect MSVC compiler version from VCToolsVersion (e.g. 14.44.xxxxx -> 194)
 for /f "tokens=2 delims=." %%V in ("%VCToolsVersion%") do set "_MSVC_MINOR=%%V"

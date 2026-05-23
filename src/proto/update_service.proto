@@ -1,0 +1,52 @@
+syntax = "proto3";
+
+option objc_class_prefix = "HLW";
+
+package UpdateServiceMessages;
+
+service UpdateService {
+  rpc UpdateServer (stream UpdateServerRequest) returns (UpdateServerReply) {}
+  rpc GetUpdateStatus (GetUpdateStatusRequest) returns (GetUpdateStatusReply) {}
+}
+
+enum UpdateStatus {
+  IDLE = 0;
+  UPLOADING = 1;
+  VERIFYING = 2;
+  INSTALLING = 3;
+  STOPPING_BUSINESS = 4;
+  STARTING_BUSINESS = 5;
+  HEALTH_CHECKING = 6;
+  SUCCEEDED = 7;
+  ROLLING_BACK = 8;
+  ROLLED_BACK = 9;
+  FAILED = 10;
+}
+
+message UpdatePackageInfo {
+  string file_name = 1;
+  uint64 file_size = 2;
+  reserved 3;
+}
+
+message UpdateServerRequest {
+  oneof payload {
+    UpdatePackageInfo info = 1;
+    bytes chunk = 2;
+  }
+}
+
+message UpdateServerReply {
+  bool ok = 1;
+  UpdateStatus status = 2;
+  string message = 3;
+}
+
+message GetUpdateStatusRequest {
+}
+
+message GetUpdateStatusReply {
+  UpdateStatus status = 1;
+  uint32 progress_percent = 2;
+  string message = 3;
+}

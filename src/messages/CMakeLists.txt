@@ -13,6 +13,7 @@ target_include_directories(client_messages
 target_link_libraries(client_messages
     PUBLIC
     server_messages
+    update_service_messages
     PRIVATE
     spdlog::spdlog
     TelemetryLib

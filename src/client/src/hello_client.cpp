@@ -22,6 +22,16 @@ auto make_otlp_endpoint(const std::string &ip_port) -> std::string
     return host + ":4317";
 }
 
+auto make_update_endpoint(const std::string &ip_port) -> std::string
+{
+    const auto colon = ip_port.rfind(':');
+    std::string host = (colon != std::string::npos) ? ip_port.substr(0, colon) : ip_port;
+    if (host == "0.0.0.0") {
+        host = "127.0.0.1";
+    }
+    return host + ":50052";
+}
+
 } // namespace
 
 // ---------------------------------------------------------------------------
@@ -56,8 +66,15 @@ auto hello_client::create(const std::string &ip_port) noexcept -> client_error
     const auto err = client.init(ip_port);
     if (err != client_error::K_OK) {
         spdlog::error("hello_client::create failed to connect to " + ip_port);
+        return err;
     }
-    return err;
+
+    const auto update_endpoint = make_update_endpoint(ip_port);
+    const auto update_err = update.init(update_endpoint);
+    if (update_err != client_error::K_OK) {
+        spdlog::error("hello_client::create failed to connect to " + update_endpoint);
+    }
+    return update_err;
 }
 
 } // namespace hello_client

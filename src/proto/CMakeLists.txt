@@ -11,9 +11,14 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 # Proto files
-set(protofiles "server_messages")
+set(protofiles "server_messages" "update_service")
 
 foreach(protofile ${protofiles})
+    set(proto_target "${protofile}")
+    if(protofile STREQUAL "update_service")
+        set(proto_target "update_service_messages")
+    endif()
+
     get_filename_component(hw_proto "${CMAKE_CURRENT_SOURCE_DIR}/${protofile}.proto" ABSOLUTE)
     get_filename_component(hw_proto_path "${hw_proto}" PATH)
     set(hw_proto_cpp_path "${CMAKE_CURRENT_BINARY_DIR}")
@@ -34,17 +39,17 @@ foreach(protofile ${protofiles})
         "${hw_proto}"
         DEPENDS "${hw_proto}")
 
-    add_library(${protofile} STATIC
+    add_library(${proto_target} STATIC
         ${hw_proto_srcs}
         ${hw_grpc_srcs})
-    target_link_libraries(${protofile} PUBLIC
+    target_link_libraries(${proto_target} PUBLIC
         gRPC::grpc++_reflection
         gRPC::grpc++
         protobuf::libprotobuf)
-    target_include_directories(${protofile} SYSTEM INTERFACE
+    target_include_directories(${proto_target} SYSTEM INTERFACE
         $<BUILD_INTERFACE:${hw_proto_cpp_path}>
     )
-    set_target_properties(${protofile} PROPERTIES
+    set_target_properties(${proto_target} PROPERTIES
         CXX_CLANG_TIDY ""
     )
 endforeach()

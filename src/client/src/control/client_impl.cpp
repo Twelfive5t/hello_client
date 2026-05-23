@@ -47,6 +47,15 @@ public:
         return client_->exit_server();
     }
 
+    auto get_server_version(std::string &version) noexcept -> client_error
+    {
+        if (!client_) {
+            spdlog::error("client_service not initialized, call init() first");
+            return client_error::K_NOT_INITIALIZED;
+        }
+        return client_->get_server_version(version);
+    }
+
 private:
     std::shared_ptr<client_messages::service_client> client_;
     std::string ip_port_;
@@ -74,6 +83,11 @@ auto client_service::check_online() noexcept -> client_error
 auto client_service::exit_server() noexcept -> client_error
 {
     return pimpl_->exit_server();
+}
+
+auto client_service::get_server_version(std::string &version) noexcept -> client_error
+{
+    return pimpl_->get_server_version(version);
 }
 
 } // namespace hello_client

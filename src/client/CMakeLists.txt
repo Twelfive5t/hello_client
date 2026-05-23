@@ -3,6 +3,7 @@ find_package(spdlog CONFIG REQUIRED)
 add_library(hello_client SHARED
     src/hello_client.cpp
     src/control/client_impl.cpp
+    src/control/update_impl.cpp
 )
 
 target_include_directories(hello_client

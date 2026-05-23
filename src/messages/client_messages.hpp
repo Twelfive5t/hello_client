@@ -32,6 +32,35 @@ public:
     /// @brief 通知服务器退出
     [[nodiscard]] auto exit_server() const noexcept -> hello_client::client_error;
 
+    /// @brief 获取服务器版本
+    [[nodiscard]] auto get_server_version(std::string &version
+    ) const noexcept -> hello_client::client_error;
+
+private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
+};
+
+/// @brief 封装 UpdateService gRPC stub 的原始调用
+class update_service_client
+{
+public:
+    explicit update_service_client(const std::string &ip_port);
+    ~update_service_client();
+
+    update_service_client(const update_service_client &) = delete;
+    auto operator=(const update_service_client &) -> update_service_client & = delete;
+    update_service_client(update_service_client &&) = delete;
+    auto operator=(update_service_client &&) -> update_service_client & = delete;
+
+    /// @brief 上传并触发服务器 OTA 升级包
+    [[nodiscard]] auto update_server(const std::string &package_path
+    ) const noexcept -> hello_client::client_error;
+
+    /// @brief 获取当前 OTA 升级状态
+    [[nodiscard]] auto get_update_status(hello_client::update_status_info &info
+    ) const noexcept -> hello_client::client_error;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

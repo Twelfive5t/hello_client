@@ -33,6 +33,11 @@ public:
     /// @return client_error::K_OK 表示服务器已收到退出请求
     auto exit_server() noexcept -> client_error;
 
+    /// @brief 获取服务器版本
+    /// @param version 输出服务器版本号
+    /// @return client_error::K_OK 表示获取成功
+    auto get_server_version(std::string &version) noexcept -> client_error;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;
