@@ -12,24 +12,22 @@ namespace hello_client
 namespace
 {
 
-auto make_otlp_endpoint(const std::string &ip_port) -> std::string
+constexpr auto K_OTLP_PORT = 4317;
+constexpr auto K_UPDATE_PORT = 50052;
+
+auto make_host(const std::string &ip_port) -> std::string
 {
     const auto colon = ip_port.rfind(':');
     std::string host = (colon != std::string::npos) ? ip_port.substr(0, colon) : ip_port;
     if (host == "0.0.0.0") {
         host = "127.0.0.1";
     }
-    return host + ":4317";
+    return host;
 }
 
-auto make_update_endpoint(const std::string &ip_port) -> std::string
+auto make_endpoint(const std::string &ip_port, const int port) -> std::string
 {
-    const auto colon = ip_port.rfind(':');
-    std::string host = (colon != std::string::npos) ? ip_port.substr(0, colon) : ip_port;
-    if (host == "0.0.0.0") {
-        host = "127.0.0.1";
-    }
-    return host + ":50052";
+    return make_host(ip_port) + ":" + std::to_string(port);
 }
 
 } // namespace
@@ -62,14 +60,14 @@ auto hello_client::create(const std::string &ip_port) noexcept -> client_error
         return client_error::K_CONNECTION_FAILED;
     }
 
-    init_tracer({ .service_name = "hello_client", .endpoint = make_otlp_endpoint(ip_port) });
+    init_tracer({ .service_name = "hello_client", .endpoint = make_endpoint(ip_port, K_OTLP_PORT) });
     const auto err = client.init(ip_port);
     if (err != client_error::K_OK) {
         spdlog::error("hello_client::create failed to connect to " + ip_port);
         return err;
     }
 
-    const auto update_endpoint = make_update_endpoint(ip_port);
+    const auto update_endpoint = make_endpoint(ip_port, K_UPDATE_PORT);
     const auto update_err = update.init(update_endpoint);
     if (update_err != client_error::K_OK) {
         spdlog::error("hello_client::create failed to connect to " + update_endpoint);
