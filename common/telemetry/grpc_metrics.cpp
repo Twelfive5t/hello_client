@@ -91,7 +91,7 @@ struct rpc_method_parts {
     std::string method_name;
 };
 
-// 从 "/ServerMessages.ServerMessagesService/CheckOnline" 形式的全路径中提取短服务名和方法名
+// 从 "/ServerServiceMessages.ServerService/CheckOnline" 形式的全路径中提取短服务名和方法名
 auto parse_rpc_method(std::string_view full_method_name) -> rpc_method_parts
 {
     if (!full_method_name.empty() && full_method_name.front() == '/') {

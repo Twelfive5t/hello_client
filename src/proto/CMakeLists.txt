@@ -11,13 +11,10 @@ message(STATUS "Using gRPC ${gRPC_VERSION}")
 set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
 
 # Proto files
-set(protofiles "server_messages" "update_service")
+set(protofiles "server_service" "update_service")
 
 foreach(protofile ${protofiles})
-    set(proto_target "${protofile}")
-    if(protofile STREQUAL "update_service")
-        set(proto_target "update_service_messages")
-    endif()
+    set(proto_target "${protofile}_messages")
 
     get_filename_component(hw_proto "${CMAKE_CURRENT_SOURCE_DIR}/${protofile}.proto" ABSOLUTE)
     get_filename_component(hw_proto_path "${hw_proto}" PATH)

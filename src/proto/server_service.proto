@@ -2,9 +2,9 @@ syntax = "proto3";
 
 option objc_class_prefix = "HLW";
 
-package ServerMessages;
+package ServerServiceMessages;
 
-service ServerMessagesService {
+service ServerService {
   rpc CheckOnline (CheckOnlineRequest) returns (CheckOnlineReply) {}
   rpc ExitServer (ExitServerRequest) returns (ExitServerReply) {}
   rpc GetServerVersion (GetServerVersionRequest) returns (GetServerVersionReply) {}

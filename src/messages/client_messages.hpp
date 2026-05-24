@@ -11,7 +11,7 @@
 namespace client_messages
 {
 
-/// @brief 封装 ServerMessagesService gRPC stub 的原始调用
+/// @brief 封装 ServerService gRPC stub 的原始调用
 ///
 /// 此类仅在库内部使用，不导出，不安装。
 /// 上层 control 通过此类调用 gRPC，屏蔽所有 protobuf/grpc 头文件依赖。

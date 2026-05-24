@@ -1,5 +1,5 @@
 /// @file include/hello_client/client_service.hpp
-/// @brief 封装 ServerMessages gRPC 服务的客户端类（PIMPL 模式）
+/// @brief 封装 ServerService gRPC 服务的客户端类（PIMPL 模式）
 
 #pragma once
 
@@ -11,7 +11,7 @@
 namespace hello_client
 {
 
-/// @brief 封装对 ServerMessagesService gRPC 接口的调用
+/// @brief 封装对 ServerService gRPC 接口的调用
 ///
 /// 使用 PIMPL 模式隐藏 gRPC 实现细节。调用任何接口前须先调用 init()。
 class HELLO_CLIENT_API client_service

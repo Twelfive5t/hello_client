@@ -1,9 +1,9 @@
 /// @file src/messages/client_messages.cpp
-/// @brief ServerMessagesService gRPC stub 封装实现
+/// @brief ServerService gRPC stub 封装实现
 
 #include "messages/client_messages.hpp"
 
-#include "server_messages.grpc.pb.h"
+#include "server_service.grpc.pb.h"
 #include "telemetry/telemetry.hpp"
 #include "update_service.grpc.pb.h"
 
@@ -84,7 +84,7 @@ auto get_file_size(const std::string &package_path, std::uint64_t &file_size) ->
 } // namespace
 
 // ---------------------------------------------------------------------------
-// PIMPL 实现 —— 持有 ServerMessagesService stub，所有 protobuf/grpc 细节封闭在此
+// PIMPL 实现 —— 持有 ServerService stub，所有 protobuf/grpc 细节封闭在此
 // ---------------------------------------------------------------------------
 class service_client::Impl
 {
@@ -94,7 +94,7 @@ public:
         auto channel = create_grpc_client_channel_with_metrics(
                 ip_port, grpc::InsecureChannelCredentials()
         );
-        stub_ = ServerMessages::ServerMessagesService::NewStub(channel);
+        stub_ = ServerServiceMessages::ServerService::NewStub(channel);
     }
 
     [[nodiscard]] auto check_online() const noexcept -> hello_client::client_error
@@ -103,8 +103,8 @@ public:
         grpc::ClientContext context;
         setup_context(context, K_RPC_TIMEOUT);
 
-        const ServerMessages::CheckOnlineRequest request{};
-        ServerMessages::CheckOnlineReply reply;
+        const ServerServiceMessages::CheckOnlineRequest request{};
+        ServerServiceMessages::CheckOnlineReply reply;
         const grpc::Status status = stub_->CheckOnline(&context, request, &reply);
 
         if (status.ok()) {
@@ -121,8 +121,8 @@ public:
         grpc::ClientContext context;
         setup_context(context, K_RPC_TIMEOUT);
 
-        const ServerMessages::ExitServerRequest request{};
-        ServerMessages::ExitServerReply reply;
+        const ServerServiceMessages::ExitServerRequest request{};
+        ServerServiceMessages::ExitServerReply reply;
         const grpc::Status status = stub_->ExitServer(&context, request, &reply);
 
         if (status.ok()) {
@@ -140,8 +140,8 @@ public:
         grpc::ClientContext context;
         setup_context(context, K_RPC_TIMEOUT);
 
-        const ServerMessages::GetServerVersionRequest request{};
-        ServerMessages::GetServerVersionReply reply;
+        const ServerServiceMessages::GetServerVersionRequest request{};
+        ServerServiceMessages::GetServerVersionReply reply;
         const grpc::Status status = stub_->GetServerVersion(&context, request, &reply);
 
         if (status.ok()) {
@@ -154,7 +154,7 @@ public:
     }
 
 private:
-    std::unique_ptr<ServerMessages::ServerMessagesService::Stub> stub_;
+    std::unique_ptr<ServerServiceMessages::ServerService::Stub> stub_;
 };
 
 // ---------------------------------------------------------------------------
