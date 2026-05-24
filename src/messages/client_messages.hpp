@@ -1,9 +1,11 @@
 /// @file src/messages/client_messages.hpp
-/// @brief 私有 gRPC stub 封装层 —— 不对外安装，仅供 control 层使用
+/// @brief 私有 gRPC stub 调用层 —— 不对外安装，仅供 control 层使用
 
 #pragma once
 
 #include "common.hpp"
+#include "server_service.grpc.pb.h"
+#include "update_service.grpc.pb.h"
 
 #include <memory>
 #include <string>
@@ -11,10 +13,10 @@
 namespace client_messages
 {
 
-/// @brief 封装 ServerService gRPC stub 的原始调用
+/// @brief ServerService gRPC stub 的原始调用
 ///
 /// 此类仅在库内部使用，不导出，不安装。
-/// 上层 control 通过此类调用 gRPC，屏蔽所有 protobuf/grpc 头文件依赖。
+/// 上层 control 通过此类调用 gRPC。
 class service_client
 {
 public:
@@ -37,11 +39,10 @@ public:
     ) const noexcept -> hello_client::client_error;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    std::unique_ptr<ServerServiceMessages::ServerService::Stub> stub_;
 };
 
-/// @brief 封装 UpdateService gRPC stub 的原始调用
+/// @brief UpdateService gRPC stub 的原始调用
 class update_service_client
 {
 public:
@@ -62,8 +63,7 @@ public:
     ) const noexcept -> hello_client::client_error;
 
 private:
-    class Impl;
-    std::unique_ptr<Impl> pimpl_;
+    std::unique_ptr<UpdateServiceMessages::UpdateService::Stub> stub_;
 };
 
 } // namespace client_messages

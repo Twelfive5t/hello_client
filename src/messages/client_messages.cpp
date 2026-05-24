@@ -3,9 +3,7 @@
 
 #include "messages/client_messages.hpp"
 
-#include "server_service.grpc.pb.h"
 #include "telemetry/telemetry.hpp"
-#include "update_service.grpc.pb.h"
 
 #include <spdlog/spdlog.h>
 
@@ -83,226 +81,76 @@ auto get_file_size(const std::string &package_path, std::uint64_t &file_size) ->
 
 } // namespace
 
-// ---------------------------------------------------------------------------
-// PIMPL 实现 —— 持有 ServerService stub，所有 protobuf/grpc 细节封闭在此
-// ---------------------------------------------------------------------------
-class service_client::Impl
+service_client::service_client(const std::string &ip_port)
 {
-public:
-    explicit Impl(const std::string &ip_port)
-    {
-        auto channel = create_grpc_client_channel_with_metrics(
-                ip_port, grpc::InsecureChannelCredentials()
-        );
-        stub_ = ServerServiceMessages::ServerService::NewStub(channel);
-    }
-
-    [[nodiscard]] auto check_online() const noexcept -> hello_client::client_error
-    {
-        trace_span span;
-        grpc::ClientContext context;
-        setup_context(context, K_RPC_TIMEOUT);
-
-        const ServerServiceMessages::CheckOnlineRequest request{};
-        ServerServiceMessages::CheckOnlineReply reply;
-        const grpc::Status status = stub_->CheckOnline(&context, request, &reply);
-
-        if (status.ok()) {
-            spdlog::debug("check_online: server is online");
-            return hello_client::client_error::K_OK;
-        }
-        spdlog::warn("check_online RPC failed: " + status.error_message());
-        return hello_client::client_error::K_RPC_FAILED;
-    }
-
-    [[nodiscard]] auto exit_server() const noexcept -> hello_client::client_error
-    {
-        trace_span span;
-        grpc::ClientContext context;
-        setup_context(context, K_RPC_TIMEOUT);
-
-        const ServerServiceMessages::ExitServerRequest request{};
-        ServerServiceMessages::ExitServerReply reply;
-        const grpc::Status status = stub_->ExitServer(&context, request, &reply);
-
-        if (status.ok()) {
-            spdlog::debug("exit_server: server acknowledged exit request");
-            return hello_client::client_error::K_OK;
-        }
-        spdlog::warn("exit_server RPC failed: " + status.error_message());
-        return hello_client::client_error::K_RPC_FAILED;
-    }
-
-    [[nodiscard]] auto get_server_version(std::string &version
-    ) const noexcept -> hello_client::client_error
-    {
-        trace_span span;
-        grpc::ClientContext context;
-        setup_context(context, K_RPC_TIMEOUT);
-
-        const ServerServiceMessages::GetServerVersionRequest request{};
-        ServerServiceMessages::GetServerVersionReply reply;
-        const grpc::Status status = stub_->GetServerVersion(&context, request, &reply);
-
-        if (status.ok()) {
-            version = reply.version();
-            spdlog::debug("get_server_version: {}", version);
-            return hello_client::client_error::K_OK;
-        }
-        spdlog::warn("get_server_version RPC failed: " + status.error_message());
-        return hello_client::client_error::K_RPC_FAILED;
-    }
-
-private:
-    std::unique_ptr<ServerServiceMessages::ServerService::Stub> stub_;
-};
-
-// ---------------------------------------------------------------------------
-// service_client 公共接口
-// ---------------------------------------------------------------------------
-service_client::service_client(const std::string &ip_port) : pimpl_(std::make_unique<Impl>(ip_port))
-{
+    auto channel =
+            create_grpc_client_channel_with_metrics(ip_port, grpc::InsecureChannelCredentials());
+    stub_ = ServerServiceMessages::ServerService::NewStub(channel);
 }
 
 service_client::~service_client() = default;
 
 auto service_client::check_online() const noexcept -> hello_client::client_error
 {
-    return pimpl_->check_online();
+    trace_span span;
+    grpc::ClientContext context;
+    setup_context(context, K_RPC_TIMEOUT);
+
+    const ServerServiceMessages::CheckOnlineRequest request{};
+    ServerServiceMessages::CheckOnlineReply reply;
+    const grpc::Status status = stub_->CheckOnline(&context, request, &reply);
+
+    if (status.ok()) {
+        spdlog::debug("check_online: server is online");
+        return hello_client::client_error::K_OK;
+    }
+    spdlog::warn("check_online RPC failed: " + status.error_message());
+    return hello_client::client_error::K_RPC_FAILED;
 }
 
 auto service_client::exit_server() const noexcept -> hello_client::client_error
 {
-    return pimpl_->exit_server();
+    trace_span span;
+    grpc::ClientContext context;
+    setup_context(context, K_RPC_TIMEOUT);
+
+    const ServerServiceMessages::ExitServerRequest request{};
+    ServerServiceMessages::ExitServerReply reply;
+    const grpc::Status status = stub_->ExitServer(&context, request, &reply);
+
+    if (status.ok()) {
+        spdlog::debug("exit_server: server acknowledged exit request");
+        return hello_client::client_error::K_OK;
+    }
+    spdlog::warn("exit_server RPC failed: " + status.error_message());
+    return hello_client::client_error::K_RPC_FAILED;
 }
 
 auto service_client::get_server_version(std::string &version
 ) const noexcept -> hello_client::client_error
 {
-    return pimpl_->get_server_version(version);
+    trace_span span;
+    grpc::ClientContext context;
+    setup_context(context, K_RPC_TIMEOUT);
+
+    const ServerServiceMessages::GetServerVersionRequest request{};
+    ServerServiceMessages::GetServerVersionReply reply;
+    const grpc::Status status = stub_->GetServerVersion(&context, request, &reply);
+
+    if (status.ok()) {
+        version = reply.version();
+        spdlog::debug("get_server_version: {}", version);
+        return hello_client::client_error::K_OK;
+    }
+    spdlog::warn("get_server_version RPC failed: " + status.error_message());
+    return hello_client::client_error::K_RPC_FAILED;
 }
 
-// ---------------------------------------------------------------------------
-// PIMPL 实现 —— 持有 UpdateService stub，所有 protobuf/grpc 细节封闭在此
-// ---------------------------------------------------------------------------
-class update_service_client::Impl
-{
-public:
-    explicit Impl(const std::string &ip_port)
-    {
-        auto channel = create_grpc_client_channel_with_metrics(
-                ip_port, grpc::InsecureChannelCredentials()
-        );
-        stub_ = UpdateServiceMessages::UpdateService::NewStub(channel);
-    }
-
-    [[nodiscard]] auto update_server(const std::string &package_path
-    ) const noexcept -> hello_client::client_error
-    {
-        namespace fs = std::filesystem;
-
-        try {
-            std::uint64_t file_size{};
-            if (!get_file_size(package_path, file_size)) {
-                spdlog::warn("invalid update package: {}", package_path);
-                return hello_client::client_error::K_RPC_FAILED;
-            }
-
-            std::ifstream input(package_path, std::ios::binary);
-            if (!input) {
-                spdlog::warn("failed to open update package: {}", package_path);
-                return hello_client::client_error::K_RPC_FAILED;
-            }
-
-            trace_span span;
-            grpc::ClientContext context;
-            setup_context(context, K_UPDATE_TIMEOUT);
-
-            UpdateServiceMessages::UpdateServerReply reply;
-            auto writer = stub_->UpdateServer(&context, &reply);
-
-            UpdateServiceMessages::UpdateServerRequest request;
-            auto *info = request.mutable_info();
-            info->set_file_name(fs::path(package_path).filename().string());
-            info->set_file_size(static_cast<std::uint64_t>(file_size));
-            if (!writer->Write(request)) {
-                spdlog::warn("update_server failed to send package info");
-                return hello_client::client_error::K_RPC_FAILED;
-            }
-
-            std::vector<char> buffer(K_CHUNK_SIZE);
-            while (input) {
-                input.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
-                const auto bytes_read = input.gcount();
-                if (bytes_read <= 0) {
-                    continue;
-                }
-
-                request.Clear();
-                request.set_chunk(buffer.data(), static_cast<std::size_t>(bytes_read));
-                if (!writer->Write(request)) {
-                    spdlog::warn("update_server stream closed while uploading package");
-                    return hello_client::client_error::K_RPC_FAILED;
-                }
-            }
-            if (input.bad()) {
-                spdlog::warn("failed while reading update package: {}", package_path);
-                return hello_client::client_error::K_RPC_FAILED;
-            }
-
-            writer->WritesDone();
-            const grpc::Status status = writer->Finish();
-            if (status.ok() && reply.ok()) {
-                spdlog::debug("update_server succeeded: {}", reply.message());
-                return hello_client::client_error::K_OK;
-            }
-
-            spdlog::warn(
-                    "update_server failed: grpc={}, reply={}",
-                    status.error_message(),
-                    reply.message()
-            );
-            return hello_client::client_error::K_RPC_FAILED;
-        } catch (const std::exception &e) {
-            spdlog::warn("update_server exception: {}", e.what());
-            return hello_client::client_error::K_RPC_FAILED;
-        } catch (...) {
-            spdlog::warn("update_server unknown exception");
-            return hello_client::client_error::K_RPC_FAILED;
-        }
-    }
-
-    [[nodiscard]] auto get_update_status(hello_client::update_status_info &info
-    ) const noexcept -> hello_client::client_error
-    {
-        trace_span span;
-        grpc::ClientContext context;
-        setup_context(context, K_RPC_TIMEOUT);
-
-        const UpdateServiceMessages::GetUpdateStatusRequest request{};
-        UpdateServiceMessages::GetUpdateStatusReply reply;
-        const grpc::Status status = stub_->GetUpdateStatus(&context, request, &reply);
-
-        if (status.ok()) {
-            info.status = to_client_update_status(reply.status());
-            info.progress_percent = reply.progress_percent();
-            info.message = reply.message();
-            return hello_client::client_error::K_OK;
-        }
-        spdlog::warn("get_update_status RPC failed: " + status.error_message());
-        return hello_client::client_error::K_RPC_FAILED;
-    }
-
-private:
-    std::unique_ptr<UpdateServiceMessages::UpdateService::Stub> stub_;
-};
-
-// ---------------------------------------------------------------------------
-// update_service_client 公共接口
-// ---------------------------------------------------------------------------
 update_service_client::update_service_client(const std::string &ip_port)
-    : pimpl_(std::make_unique<Impl>(ip_port))
 {
+    auto channel =
+            create_grpc_client_channel_with_metrics(ip_port, grpc::InsecureChannelCredentials());
+    stub_ = UpdateServiceMessages::UpdateService::NewStub(channel);
 }
 
 update_service_client::~update_service_client() = default;
@@ -310,13 +158,96 @@ update_service_client::~update_service_client() = default;
 auto update_service_client::update_server(const std::string &package_path
 ) const noexcept -> hello_client::client_error
 {
-    return pimpl_->update_server(package_path);
+    namespace fs = std::filesystem;
+
+    try {
+        std::uint64_t file_size{};
+        if (!get_file_size(package_path, file_size)) {
+            spdlog::warn("invalid update package: {}", package_path);
+            return hello_client::client_error::K_RPC_FAILED;
+        }
+
+        std::ifstream input(package_path, std::ios::binary);
+        if (!input) {
+            spdlog::warn("failed to open update package: {}", package_path);
+            return hello_client::client_error::K_RPC_FAILED;
+        }
+
+        trace_span span;
+        grpc::ClientContext context;
+        setup_context(context, K_UPDATE_TIMEOUT);
+
+        UpdateServiceMessages::UpdateServerReply reply;
+        auto writer = stub_->UpdateServer(&context, &reply);
+
+        UpdateServiceMessages::UpdateServerRequest request;
+        auto *info = request.mutable_info();
+        info->set_file_name(fs::path(package_path).filename().string());
+        info->set_file_size(static_cast<std::uint64_t>(file_size));
+        if (!writer->Write(request)) {
+            spdlog::warn("update_server failed to send package info");
+            return hello_client::client_error::K_RPC_FAILED;
+        }
+
+        std::vector<char> buffer(K_CHUNK_SIZE);
+        while (input) {
+            input.read(buffer.data(), static_cast<std::streamsize>(buffer.size()));
+            const auto bytes_read = input.gcount();
+            if (bytes_read <= 0) {
+                continue;
+            }
+
+            request.Clear();
+            request.set_chunk(buffer.data(), static_cast<std::size_t>(bytes_read));
+            if (!writer->Write(request)) {
+                spdlog::warn("update_server stream closed while uploading package");
+                return hello_client::client_error::K_RPC_FAILED;
+            }
+        }
+        if (input.bad()) {
+            spdlog::warn("failed while reading update package: {}", package_path);
+            return hello_client::client_error::K_RPC_FAILED;
+        }
+
+        writer->WritesDone();
+        const grpc::Status status = writer->Finish();
+        if (status.ok() && reply.ok()) {
+            spdlog::debug("update_server succeeded: {}", reply.message());
+            return hello_client::client_error::K_OK;
+        }
+
+        spdlog::warn(
+                "update_server failed: grpc={}, reply={}", status.error_message(), reply.message()
+        );
+        return hello_client::client_error::K_RPC_FAILED;
+    } catch (const std::exception &e) {
+        spdlog::warn("update_server exception: {}", e.what());
+        return hello_client::client_error::K_RPC_FAILED;
+    } catch (...) {
+        spdlog::warn("update_server unknown exception");
+        return hello_client::client_error::K_RPC_FAILED;
+    }
 }
 
 auto update_service_client::get_update_status(hello_client::update_status_info &info
 ) const noexcept -> hello_client::client_error
 {
-    return pimpl_->get_update_status(info);
+    trace_span span;
+    grpc::ClientContext context;
+    setup_context(context, K_RPC_TIMEOUT);
+
+    const UpdateServiceMessages::GetUpdateStatusRequest request{};
+    UpdateServiceMessages::GetUpdateStatusReply reply;
+    const grpc::Status status = stub_->GetUpdateStatus(&context, request, &reply);
+
+    if (status.ok()) {
+        info.status = to_client_update_status(reply.status());
+        info.progress_percent = reply.progress_percent();
+        info.message = reply.message();
+        return hello_client::client_error::K_OK;
+    }
+    spdlog::warn("get_update_status RPC failed: " + status.error_message());
+    return hello_client::client_error::K_RPC_FAILED;
 }
 
 } // namespace client_messages

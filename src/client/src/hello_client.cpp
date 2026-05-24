@@ -25,7 +25,7 @@ auto make_host(const std::string &ip_port) -> std::string
     return host;
 }
 
-auto make_endpoint(const std::string &ip_port, const int port) -> std::string
+auto make_endpoint(const std::string &ip_port, int port) -> std::string
 {
     return make_host(ip_port) + ":" + std::to_string(port);
 }
@@ -60,7 +60,8 @@ auto hello_client::create(const std::string &ip_port) noexcept -> client_error
         return client_error::K_CONNECTION_FAILED;
     }
 
-    init_tracer({ .service_name = "hello_client", .endpoint = make_endpoint(ip_port, K_OTLP_PORT) });
+    init_tracer({ .service_name = "hello_client", .endpoint = make_endpoint(ip_port, K_OTLP_PORT) }
+    );
     const auto err = client.init(ip_port);
     if (err != client_error::K_OK) {
         spdlog::error("hello_client::create failed to connect to " + ip_port);
